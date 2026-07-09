@@ -141,3 +141,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+.Rproj.user
+.positai
+
+# --- R / RStudio essentials (.Rproj.user already listed above) ---
+# Keeps fwoc.Rproj tracked; ignores per-user session state + local secrets.
+.Rhistory
+.Rapp.history
+.RData
+.RDataTmp
+.Ruserdata
+.Renviron
