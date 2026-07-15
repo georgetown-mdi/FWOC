@@ -91,7 +91,7 @@ arrow_table(schema=): Arrow binds schema fields to data columns by position, not
 
 ### Code style
 
-- Tidyverse style: snake_case, single-space assignment, native `|>` pipe, no aligned `=`/`~` columns. Run `styler` (tidyverse) on new/edited files.
+- Tidyverse style: snake_case, single-space assignment, native `|>` pipe. Run `styler` (tidyverse) on new/edited files — its output is the standard. Aligning `=`/`<-` into columns is allowed where it aids readability (style guide §2.2.5): styler preserves deliberate alignment and collapses stray spacing.
 - Prefer the engine over row-wise R: express transforms in Arrow / `data.table` / vectorized dplyr rather than per-row loops or applies — that (not loop-vs-apply) is the performance lever on large data.
 - Clarity over cleverness: extract a named, testable helper rather than a complex inline anonymous function.
 - Comments are high-signal — explain the *why* and the non-obvious OPM/domain quirk, not the *what*.
