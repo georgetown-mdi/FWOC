@@ -86,7 +86,7 @@ arrow_table(schema=): Arrow binds schema fields to data columns by position, not
 
 ### Missing values & reading
 
-- Every readr read/write of source files and lookup CSVs passes `na = ""`: a literal `"NA"` is a real code (e.g., the National Aeronautics and Space Council agency), an empty cell means missing.
+- Every readr read/write of a text file (CSV/TSV/pipe/fixed-width) passes `na = ""`: a literal `"NA"` is a real code (e.g., the National Aeronautics and Space Council agency), an empty cell means missing. Text has no typed null, so the default spells the real code and missing identically; Parquet has a typed null and is unaffected.
 - Read code variables as character (`col_types = cols(.default = "c")`) to avoid mapping sentinels to NA (e.g., `**` for a two-digit numeric code) and to preserve zero-padded codes.
 
 ### Code style
