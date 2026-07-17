@@ -5,6 +5,7 @@
 #   (added/removed/changed codes, labels, date ranges) and, if anything changed,
 #   writes a report and EXITS NON-ZERO so the rebuild is gated until a human
 #   reviews and re-runs with FWOC_METADATA_ACK=1. Run before 00_build_fwoc.R.
+#   If no prior metadata exists, exits 0.
 #
 #   Run from the project root:
 #     Rscript setup/check_opm_metadata.R
@@ -20,7 +21,10 @@ source("utils/code_table_functions.R")
 ct <- "metadata/code_tables/"
 prior_root <- paste0(ct, "prior_downloads") # ct ends in "/", so paste0 avoids a doubled slash
 latest_prior <- sort(list.dirs(prior_root, recursive = FALSE, full.names = TRUE), decreasing = TRUE)[1]
-if (is.na(latest_prior)) stop("No prior_downloads/ subdirectory to diff against.")
+if (is.na(latest_prior)) {
+  message("No prior_downloads/ to diff against -- first run / new repo, nothing to gate.")
+  quit(save = "no", status = 0)
+}
 prior_dir <- paste0(latest_prior, "/")
 message("Diffing current code_tables against ", latest_prior)
 
