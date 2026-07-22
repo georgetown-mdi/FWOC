@@ -136,46 +136,48 @@ objects_to_list <- function(objects) {
 
 get_object <- function(key) {
 
-  objects <- list_objects(key)
+    parent_prefix <- sub("[^/]+$", "", key)
 
-  if (
-    NROW(objects) == 0 ||
-    !"Key" %in% names(objects)
-  ) {
-    stop(
-      paste(
-        "Object not found:",
+    objects <- list_objects(parent_prefix)
+
+    if (
+        NROW(objects) == 0 ||
+        !"Key" %in% names(objects)
+    ) {
+        stop(
+        paste(
+            "Object not found:",
+            key
+        )
+        )
+    }
+
+    match <- objects[
+        objects$Key == key,
+        ,
+        drop = FALSE
+    ]
+
+    if (NROW(match) == 0) {
+        stop(
+        paste(
+            "Exact object not found:",
+            key
+        )
+        )
+    }
+
+    if (NROW(match) > 1) {
+        warning(
+        "Multiple objects matched; using the first match: ",
         key
-      )
+        )
+    }
+
+    as.list(
+        match[1, , drop = FALSE]
     )
-  }
-
-  match <- objects[
-    objects$Key == key,
-    ,
-    drop = FALSE
-  ]
-
-  if (NROW(match) == 0) {
-    stop(
-      paste(
-        "Exact object not found:",
-        key
-      )
-    )
-  }
-
-  if (NROW(match) > 1) {
-    warning(
-      "Multiple objects matched; using the first match: ",
-      key
-    )
-  }
-
-  as.list(
-    match[1, , drop = FALSE]
-  )
-}
+    }
 
 
 ############################################################
