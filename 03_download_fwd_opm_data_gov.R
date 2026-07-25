@@ -3,10 +3,12 @@
 #          data.opm.gov API as Parquet, into per-dataset raw folders under
 #          data_opm_gov/. Idempotent: for each dataset it lists every available
 #          file from the API, compares against what is already on disk, and
-#          downloads only the missing ones. All published versions are kept;
-#          04 selects the max version per year/month when it builds the fwd_* hives.
-#          Also writes metadata/fwd/file_manifest.csv, the committed provenance
-#          record of exactly which OPM files the published data was built from
+#          downloads only what is missing or incomplete. Every published version
+#          is kept.
+#          Also writes metadata/fwd/file_manifest.csv, which does double duty: 04
+#          reads it to pick the version OPM flags as current for each period, so
+#          this script is a hard prerequisite for that one; and it is the committed
+#          record of exactly which OPM files a release of the data was built from
 #          (the downloads themselves are far too large to commit).
 # API docs: https://data.opm.gov/get-data/api-access
 
