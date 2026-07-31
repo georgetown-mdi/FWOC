@@ -125,23 +125,36 @@ key_ymg <- c("year", "month", "occupational_series_code", "pay_plan_code", "grad
 # ---- Level 1: (year, month, series) that map to exactly one category ----
 ser <- obs |>
   group_by(pick(all_of(key_ym))) |>
-  summarise(k   = n_distinct(occupational_category_code),
-            occupational_category_code = first(occupational_category_code),  # valid when k == 1
-            .groups = "drop")
+  summarise(k         = n_distinct(occupational_category_code),
+            # first_cat rather than assigning back to the source column, for the
+            # same reason as the Level 2 summarise below: it keeps any later
+            # expression reading the group's values, not first()'s scalar.
+            first_cat = first(occupational_category_code),  # valid when k == 1
+            .groups   = "drop")
 
-lvl1       <- ser |> filter(k == 1) |> select(all_of(key_ym), occupational_category_code)
+lvl1       <- ser |> filter(k == 1) |>
+  select(all_of(key_ym), occupational_category_code = first_cat)
 split_keys <- ser |> filter(k >  1) |> select(all_of(key_ym))
 
 # ---- Level 2: for split (year, month, series), (... pay_plan, grade) clean cells ----
 cell <- obs |>
   semi_join(split_keys, by = key_ym) |>
   group_by(pick(all_of(key_ymg))) |>
-  summarise(k    = n_distinct(occupational_category_code),
-            occupational_category_code = first(occupational_category_code),  # valid when k == 1
-            cats = paste(sort(unique(occupational_category_code)), collapse = "|"),
-            .groups = "drop")
+  summarise(k         = n_distinct(occupational_category_code),
+            cats      = paste(sort(unique(occupational_category_code)),
+                              collapse = "|"),
+            # first_cat, NOT occupational_category_code. summarise() evaluates
+            # sequentially, so assigning back to the source column would make
+            # cats order-dependent: any expression after it would see the single
+            # first() value instead of the group's values, and cats would record
+            # the winner rather than the competitors -- the one thing this
+            # diagnostics file exists to capture. A distinct name makes that
+            # impossible rather than merely avoided. Renamed back on the way out.
+            first_cat = first(occupational_category_code),  # valid when k == 1
+            .groups   = "drop")
 
-lvl2  <- cell |> filter(k == 1) |> select(all_of(key_ymg), occupational_category_code)
+lvl2  <- cell |> filter(k == 1) |>
+  select(all_of(key_ymg), occupational_category_code = first_cat)
 unres <- cell |> filter(k >  1) |> select(all_of(key_ymg), competing_categories = cats)
 
 # Attach the human-readable category label (stable code->label) for QA readability.
