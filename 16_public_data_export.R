@@ -445,6 +445,20 @@ flush_zips()
 
 
 # ============================================================
+#### 5. Agency code lookup ####
+# ============================================================
+
+lookup <- emp |>
+  distinct(agency_code, agency) |>
+  collect() |>
+  filter(!agency_code %in% exclude_codes) |>
+  arrange(agency_code, agency)
+# Lives at the bucket root (not under csv/agency/) to match the published
+# layout.
+write_csv(lookup, file.path(export_root, "agency_code_lookup.csv"), na = "")
+
+
+# ============================================================
 #### 6. Prune archives this run did not produce ####
 # ============================================================
 
@@ -491,18 +505,5 @@ if (length(stale) > 0) {
   if (!all(file.remove(stale))) stop("failed to prune stale archive(s)")
 }
 
-
-# ============================================================
-#### 5. Agency code lookup ####
-# ============================================================
-
-lookup <- emp |>
-  distinct(agency_code, agency) |>
-  collect() |>
-  filter(!agency_code %in% exclude_codes) |>
-  arrange(agency_code, agency)
-# Lives at the bucket root (not under csv/agency/) to match the published
-# layout.
-write_csv(lookup, file.path(export_root, "agency_code_lookup.csv"), na = "")
 
 message("=== Done ===")
