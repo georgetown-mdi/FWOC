@@ -431,14 +431,71 @@ for (code in by_decade_codes) {
 }
 
 # --- Whole agency ---
+# The other two tiers filter on `year`, a partition key, so arrow discards whole
+# directories before reading. This tier has no year predicate, and `agency_code`
+# is an ordinary column -- so `filter(agency_code == code)` prunes NOTHING, and
+# each of the ~307 items opens all 331 parquet files (55 GB) to extract one
+# small agency. Measured 2026-08-02: 9.7 h for the tier, 43% of a 22.5 h run.
+#
+# So scan once into an agency-partitioned copy of just this tier's rows, then
+# read each agency back from its own directory. The same filter becomes a
+# partition predicate against that copy, and the per-item cost collapses to the
+# write. Projected ~15 min; NOT yet measured -- confirm on the next run.
 message("-- Whole agency --")
+
+# Store the whole-agency tier hive one directory above the repo root -- a ~6 GB
+# derived intermediate has no business in a public tree. Deliberately NOT under
+# staging_root: staged_bytes() sums only the job list, so a hive in /dev/shm
+# would be invisible to the flush and silently overdraw the tmpfs budget.
+small_root <- file.path("..", "whole-agency")
+
+# A run killed mid-tier leaves this behind, and write_dataset() would then mix
+# stale partitions with fresh ones -- its default overwrites same-named files
+# but does not clear the directory. recursive = TRUE takes the whole tree.
+if (dir.exists(small_root)) unlink(small_root, recursive = TRUE)
+
+emp |>
+  filter(agency_code %in% whole_codes) |>
+  write_dataset(small_root,
+                partitioning   = "agency_code",
+                hive_style     = TRUE,
+                use_dictionary = FALSE)
+
+small <- open_dataset(small_root)
+
+# Written in one pass, so the schema is uniform by construction -- no
+# unify_schemas here, which is part of why the reads are cheap.
+#
+# Two things the round-trip could break, both silent:
+#   1. Partitioning STORES agency_code as a directory name and drops it from the
+#      data files. "NA" is a real OPM code (National Aeronautics and Space
+#      Council), and a hive parser that reads it as a null would blank the
+#      agency on every one of that agency's rows.
+#   2. A column lost in the round-trip would simply be absent from the export.
+stopifnot(
+  !anyNA(small |> distinct(agency_code) |> collect() |> pull(agency_code)),
+  setequal(names(small), names(emp))
+)
+
+# Partition keys come back LAST, not in their original position -- so restore
+# the published column order that 15_finalize_hive.R established. Without this
+# the whole-agency files would carry a different column order than the by-year
+# and by-decade files.
+emp_cols <- names(emp)
+
 for (code in whole_codes) {
   message(code)
-  chunk <- emp |> filter(agency_code == code) |> collect()
+  chunk <- small |>
+    filter(agency_code == code) |>
+    collect() |>
+    select(all_of(emp_cols))
   if (nrow(chunk) > 0) write_export(chunk, code, csv_agency, dta_agency)
   rm(chunk)
   gc()
 }
+
+rm(small)
+unlink(small_root, recursive = TRUE)
 
 # Whatever is still staged and under the threshold.
 flush_zips()
