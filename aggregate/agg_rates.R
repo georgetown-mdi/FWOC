@@ -86,6 +86,9 @@ emp_a_sub <- emp |>
   filter(month == 12L) |>
   count(year, !!!syms(grp_sub)) |>
   rename(emp_n = n) |>
+  # Shift year by 1 so Dec emp of year Y-1 is the denominator for year Y
+  # acc/sep. After this, year names the TARGET year, so the filter below is
+  # about acc/sep years, not emp years.
   mutate(year = year + 1L) |>
   filter(year >= 1982L, year <= yr_cutoff) |>
   collect()
@@ -148,13 +151,20 @@ gc()
 ###########################################################################
 
 # Subagency-level emp (finest grain)
+
 emp_m_sub <- emp |>
   prep() |>
   filter(year >= 2011L) |>
   count(year, month, !!!syms(grp_sub)) |>
   rename(emp_n = n) |>
   collect() |>
+  # Shift year/month by 1 so emp count of t-1 is the denominator for acc/sep
+  # count of t. After this, year/month name the TARGET month, so the filter
+  # below is about acc/sep periods, not emp months.
   mutate(
+    # Parse a date string to year-month-day and increment by one calendar
+    # month. %m+% rather than + so an end-of-month day would roll back to the
+    # last valid day instead of returning NA.
     dt = ymd(paste(year, month, "01")) %m+% months(1),
     year = as.integer(year(dt)),
     month = as.integer(month(dt))
