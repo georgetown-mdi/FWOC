@@ -8,11 +8,15 @@
 #     agg_rates.R (+ agg_agency_subagency.R, agg_politicization.R)
 #       -> this script  -> BigQuery external tables pick up the new files.
 #
-#   Run from the repo root:
-#     Rscript aggregate/push_to_gcs.R            # upload new/changed files
-#     Rscript aggregate/push_to_gcs.R --dry-run  # preview, no changes
-#     Rscript aggregate/push_to_gcs.R --mirror   # also delete remote files
-#                                                # absent locally (full mirror)
+#   To execute this file, run one of the following commands in a terminal
+#   from the repo root:
+#     Rscript aggregate/push_to_gcs.R                     # upload new/changed
+#     Rscript aggregate/push_to_gcs.R --dry-run           # preview, no changes
+#     Rscript aggregate/push_to_gcs.R --mirror            # also DELETES remote
+#     Rscript aggregate/push_to_gcs.R --dry-run --mirror  # preview a mirror
+#
+#   --mirror deletes remote files that are absent locally. Always preview it
+#   with --dry-run --mirror first.
 #
 #   Requires gcloud authenticated for the project behind FWOC_GCS_DEST
 #   (`gcloud auth login`, or an active service account).
@@ -27,12 +31,22 @@ local_dir <- "aggregate_data/parquet/"
 #   FWOC_GCS_DEST="gs://<bucket>/<path>/parquet/"
 gcs_dest <- Sys.getenv("FWOC_GCS_DEST")
 
-# CLI flags override these defaults (edit here to change the default behavior).
+# Flags come from the command line; both default to FALSE when absent. To
+# change the default, edit the assignment below (e.g. dry_run <- TRUE).
 args <- commandArgs(trailingOnly = TRUE)
+known_flags <- c("--dry-run", "--mirror")
 dry_run <- "--dry-run" %in% args
 mirror <- "--mirror" %in% args   # delete remote objects not present locally
 
 # --- preflight ------------------------------------------------------------
+# Flags are matched exactly, so a typo would otherwise be ignored silently --
+# and a mistyped --dry-run means a real push when a preview was intended.
+unknown_flags <- setdiff(args, known_flags)
+if (length(unknown_flags)) {
+  stop("Unrecognized flag(s): ", paste(unknown_flags, collapse = " "),
+       "\n  Known flags: ", paste(known_flags, collapse = " "))
+}
+
 # Checked before anything else: an unset destination is a setup error, and
 # without this the rsync would fail deep inside gcloud with a vaguer message.
 if (!nzchar(gcs_dest)) {
@@ -55,7 +69,10 @@ if (!dir.exists(local_dir)) {
 }
 
 # Refuse to sync an empty directory: with --mirror it would wipe the bucket.
-n_parquet <- length(list.files(local_dir, pattern = "\\.parquet$"))
+# recursive = TRUE to match the -r on the rsync below, so the guard counts
+# exactly the files the sync would send.
+n_parquet <- length(list.files(local_dir, pattern = "\\.parquet$",
+                               recursive = TRUE))
 if (n_parquet == 0) {
   stop("No .parquet files in ", local_dir,
        " -- refusing to sync an empty directory.")
