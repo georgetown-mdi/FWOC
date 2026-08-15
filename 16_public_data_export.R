@@ -508,8 +508,50 @@ flush_zips()
 lookup <- emp |>
   distinct(agency_code, agency) |>
   collect() |>
-  filter(!agency_code %in% exclude_codes) |>
+  filter(!agency_code %in% exclude_codes)
+
+# A code keeps every name it was published under, so a renamed agency returns
+# more than one row and its single file covers them all.
+#
+# `agency` is NA wherever a row's date falls outside every label window for its
+# code -- a code can outlive its label (AE keeps appearing after the Atomic
+# Energy Commission is abolished) or its label can expire before the hive's
+# first observation. A code named in some other period loses only a duplicate
+# row when those are dropped below. A code with no named period at all would
+# drop out of the lookup while its files stay published, so it takes its name
+# from the label table directly, ignoring the window. The code set still comes
+# from the hive -- this only supplies names for codes already in it.
+unnamed <- setdiff(lookup$agency_code[is.na(lookup$agency)],
+                   lookup$agency_code[!is.na(lookup$agency)])
+
+fill <- read_csv("metadata/labels/agency_labels.csv",
+                 col_types = cols(.default = "c"), na = "") |>
+  filter(code %in% unnamed) |>
+  # Label windows are split at reorganizations that often do not change the
+  # name, so the same code-name pair recurs across rows. Dedupe on the pair and
+  # drop the dates: a code with one name yields one row, and a code with
+  # genuinely different names yields one row per name -- the same fan-out the
+  # named codes above already have.
+  distinct(agency_code = code, fill_label = label)
+
+codes_before <- unique(lookup$agency_code)
+
+lookup <- lookup |>
+  left_join(fill, by = "agency_code") |>
+  mutate(agency = coalesce(agency, fill_label)) |>
+  select(-fill_label) |>
+  filter(!is.na(agency)) |>
+  distinct() |>
   arrange(agency_code, agency)
+
+# Dropping unnamed rows must not drop a code: every published agency file needs
+# an entry here.
+if (!setequal(codes_before, lookup$agency_code)) {
+  stop("agency_code_lookup lost code(s): ",
+       paste(setdiff(codes_before, lookup$agency_code), collapse = ", "),
+       "\n  No label in metadata/labels/agency_labels.csv covers them.")
+}
+
 # Lives at the bucket root (not under csv/agency/) to match the published
 # layout.
 write_csv(lookup, file.path(export_root, "agency_code_lookup.csv"), na = "")
