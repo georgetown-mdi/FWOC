@@ -8,31 +8,13 @@
 library(arrow)
 library(dplyr)
 library(lubridate)
+source("utils/derive_functions.R")   # add_los_ord(), shared with validation/01_overlap.R
 
 # OPM ships these indicators as two-valued strings. The recodes below map anything
 # that is not the positive value to 0, so a value OPM added would land as 0 with no
 # error. Each block asserts its source values first; the checks read one column only.
 yn_levels  <- c("Y", "N", NA)
 cfo_levels <- c("CFO ACT AGENCY", "OTHER AGENCY", NA)
-
-# Bin length of service into the BZ los_level brackets that 05 passes through.
-# The bins cover every non-negative integer and length_of_service_years is int16,
-# so only a missing LOS falls through -- hence no default branch.
-# validation/01_overlap.R's vector copy is a deliberately independent re-derivation of
-# these brackets -- it is what checks this function, so do not consolidate the two.
-add_los_ord <- function(ds) {
-  ds |>
-    mutate(length_of_service_ord = case_when(length_of_service_years <  1                                  ~ "< 1",
-                                             length_of_service_years >= 1  & length_of_service_years <= 2  ~ "1-2",
-                                             length_of_service_years >= 3  & length_of_service_years <= 4  ~ "3-4",
-                                             length_of_service_years >= 5  & length_of_service_years <= 9  ~ "5-9",
-                                             length_of_service_years >= 10 & length_of_service_years <= 14 ~ "10-14",
-                                             length_of_service_years >= 15 & length_of_service_years <= 19 ~ "15-19",
-                                             length_of_service_years >= 20 & length_of_service_years <= 24 ~ "20-24",
-                                             length_of_service_years >= 25 & length_of_service_years <= 29 ~ "25-29",
-                                             length_of_service_years >= 30 & length_of_service_years <= 34 ~ "30-34",
-                                             length_of_service_years >= 35                                 ~ "35+"))
-}
 
 #### Employment ####
 
