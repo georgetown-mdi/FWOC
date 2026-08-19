@@ -7,8 +7,9 @@
 #   for "frozen" months (those OPM did NOT re-version this cycle -- from the source
 #   file versions; the first run seeds both baselines and defers the check) are unchanged
 #   vs the prior run -- hard for all three, checked separately. An unexplained change
-#   halts the suite and holds both baselines at their prior values;
-#   FWOC_ACCEPT_HISTORY=1 accepts a reviewed change and lets them roll forward.
+#   halts the suite and holds both baselines at their prior values; a row in
+#   metadata/validation/baselines/ex5_history_allowlist.csv accepts a reviewed change
+#   and lets them roll forward.
 #   No duplicate-pseudo_id check -- duplicate ids are an expected feature of the data.
 
 library(arrow)
@@ -217,24 +218,37 @@ if (is.null(cmp) && is.null(updated)) {
   unexpected_changes <- cmp |> filter(changed) |>
     left_join(allow, by = c("dataset", "year", "month")) |> filter(is.na(allow))
 
-  fmt     <- function(df) paste(sprintf("%s %s-%s %+d", df$dataset, df$year, df$month, df$delta), collapse = ", ")
-  # Any non-empty value counts as set, "0" and "false" included -- setting it is the operator's
-  # explicit statement that the changes reported below were reviewed. It clears all three hard
-  # checks and releases the roll-forward at the end of this block.
-  ack     <- nzchar(Sys.getenv("FWOC_ACCEPT_HISTORY"))
+  # Rendered as allowlist rows so a reviewed change can be pasted straight into
+  # ex5_history_allowlist.csv; the reason column still has to be written by hand.
+  fmt <- function(df) paste(sprintf("%s,%s,%s,%+d", df$dataset, df$year, df$month, df$delta),
+                            collapse = " | ")
+
+  # Reviewed exceptions live in a committed allowlist, like ex2's and ex3's -- not an
+  # environment variable. Two things follow from that choice. The acceptance is a durable,
+  # reviewable record carrying its own reason, where an env var left none: the flag cleared
+  # the check AND rolled the baselines forward, erasing what it had been comparing against.
+  # And the key includes `delta`, so an accepted change never excuses a DIFFERENT later
+  # change to the same period -- which is what makes rows safe to leave in the file forever
+  # rather than pruning them after each roll-forward.
+  hist_allow <- load_allowlist("metadata/validation/baselines/ex5_history_allowlist.csv")
+  if (nrow(hist_allow) > 0) {
+    hist_allow <- transmute(hist_allow, dataset, year, month,
+                            delta = suppressWarnings(as.numeric(delta)))
+    unexpected_changes <- anti_join(unexpected_changes, hist_allow,
+                                    by = c("dataset", "year", "month", "delta"))
+  }
 
   # One check per dataset, not one pooled: OPM can re-publish accessions for a period and not
   # separations, and a pooled row hides which of the three moved. All three hard -- a routine OPM
   # revision arrives with a version bump and was already absorbed by `allow` above, and an in-place
   # rewrite of a file already on disk halts back in 03, so a frozen count that moved has no benign
-  # source left to attribute it to. Override a reviewed change with FWOC_ACCEPT_HISTORY=1.
+  # source left to attribute it to.
   for (dsn in c("emp", "acc", "sep")) {
     chg <- filter(unexpected_changes, dataset == dsn)
-    val_check(sprintf("history_stability_%s", dsn), nrow(chg) == 0 || ack,
+    val_check(sprintf("history_stability_%s", dsn), nrow(chg) == 0,
               detail = if (nrow(chg) == 0) sprintf("%s frozen periods unchanged", dsn)
-                       else paste0(nrow(chg), " ", dsn, " period(s) changed",
-                                   if (ack) " (accepted via FWOC_ACCEPT_HISTORY): " else " -- investigate: ",
-                                   fmt(chg)))
+                       else paste0(nrow(chg), " ", dsn, " period(s) changed -- investigate, or ",
+                                   "add to ex5_history_allowlist.csv after review: ", fmt(chg)))
   }
 
   # Roll both files forward together, and only when nothing unexplained moved in ANY of the three
@@ -242,7 +256,9 @@ if (is.null(cmp) && is.null(updated)) {
   # over a dirty one would write the drift in as the new baseline, and the check, having erased
   # what it was comparing against, would never fire on it again. The two files are one state and
   # cannot move separately -- see the note above ver_path.
-  if (nrow(unexpected_changes) == 0 || ack) {
+  # An allowlisted change is already gone from unexpected_changes, so accepting one
+  # releases the roll-forward exactly as a genuinely-unchanged cycle does.
+  if (nrow(unexpected_changes) == 0) {
     readr::write_csv(cur_counts, hist_path, na = "")
     readr::write_csv(cur_ver, ver_path, na = "")
   }
