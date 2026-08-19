@@ -393,6 +393,14 @@ writeInspection(cv, acc, c("accession_category_code", "accession_category"), "ac
 cv <- coverageByYearMonth(data = acc, var = "appointment_not_to_exceed_date")
 writeInspection(cv, acc, "appointment_not_to_exceed_date", "acc", top_n = 200)
 
+#### pathways_group ####
+
+# Accessions only. OPM ships it in the accession and separation files from
+# 2015-01, but never in the employment file; 15_finalize_hive.R keeps it on acc
+# and drops it from sep, where no row is populated (see the manifest note).
+cv <- coverageByYearMonth(data = acc, var = "pathways_group")
+writeInspection(cv, acc, "pathways_group", "acc")
+
 #### eff_date (sep) ####
 
 cv <- coverageByYearMonth(data = sep, var = "eff_date")
