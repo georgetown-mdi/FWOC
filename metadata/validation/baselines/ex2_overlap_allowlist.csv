@@ -1,0 +1,2 @@
+lookup,code,reason
+agency_labels.csv,HS,"Overlap left as-is per the OPM master table: HS 1970-01 (NHTSA exact dup) and 2001-09 (OFFICE OF HOMELAND SECURITY vs DEPARTMENT OF HOMELAND SECURITY). HS has zero BZ/FWD records in either window, so the time-varying join never duplicates. If OPM ever adds HS data there, 03_reconcile.R catches the row inflation."
