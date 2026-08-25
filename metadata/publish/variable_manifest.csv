@@ -115,4 +115,4 @@ separation_category,,,keep,
 drp_indicator,,,keep,
 drp_indicator_fwoc,,,keep,
 count,drop,drop,drop,"Constant 1 in every FWD row and NA in every BZ row (no such field in the BuzzFeed source). Measured 2026-07-31: emp 432,463,585 ones / 254,276,041 NA; acc 5,510,443 / 7,250,776; sep 5,265,034 / 7,197,612. Carries no information."
-pathways_group,,keep,drop,"Pathways Programs hiring authority. OPM added it to acc and sep at the 2015-01 schema change. Populated only on accessions -- 135,964 of 2,934,726 rows (4.63%), values INTERN / PMF / RECENT GRAD / STUDENT TRAINEE. Zero of 2,866,644 separation rows are populated, so it is dropped there and kept on acc."
+pathways_group,,keep,keep,"Pathways Programs hiring authority. OPM added it to acc and sep at the 2015-01 schema change; it is absent from every employment file. Populated only on accessions -- 137,661 of 12,779,249 acc rows (1.08%), values INTERN / PMF / RECENT GRAD / STUDENT TRAINEE. Zero of 5,281,813 FWD separation rows are populated, but the column is kept on sep to match the source schema, where it publishes as entirely NA."
