@@ -10,7 +10,8 @@
 #   Monthly metadata-refresh order (run from the fwoc/ project root):
 #     Rscript setup/check_opm_metadata.R          # gate: diff t vs t-1
 #     FWOC_METADATA_ACK=1 Rscript setup/check_opm_metadata.R   # after review
-#     Rscript setup/build_labels.R                # regenerate + guard labels
+#     Rscript setup/build_labels.R                # regenerate + guard labels; also
+#                                                 # derives DutyStations_<date>.csv
 #     # review `git diff` of metadata/labels/, commit, then build the hives
 #
 #   Time-varying tables (agency, subagency, education, occupation, ...) are guarded
@@ -367,12 +368,23 @@ write_csv(sep_codes, file = "metadata/labels/sep_labels.csv", na = "")
 #### Duty Station codes ####
 # ============================================================
 
-ct_ds <- find_code_table(path, "DutyStations", ext = "csv")
-ds_map <- read_csv(ct_ds$file, col_types = cols(.default = "c"), na = "")
+# From 2026-09 OPM serves Duty Stations only as a two-sheet .xlsx (see
+# read_duty_stations() in utils/code_table_functions.R). 08_bz_duty_station_state.R
+# and 13_duty_station_backfill.R still read the flat CSV, so it is derived here and
+# written beside the workbook under the same download date. find_code_table()
+# rejects >1 csv, so an old derived CSV must be archived to prior_downloads/ along
+# with its workbook -- the archived copy is what next month's gate diffs against.
+ct_ds <- find_code_table(path, "DutyStations", ext = "xlsx")
+ds_map <- read_duty_stations(ct_ds$file)
 
 if (any(duplicated(ds_map$Code))) {
   stop("Duplicated Duty Station codes.")
 }
+
+write_csv(ds_map,
+  file = paste0(path, "DutyStations_", format(ct_ds$download_date, "%Y%m%d"), ".csv"),
+  na = ""
+)
 
 # ============================================================
 #### Provenance stamp (freshness guard) ####

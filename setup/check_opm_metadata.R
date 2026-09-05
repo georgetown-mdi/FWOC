@@ -107,9 +107,13 @@ for (m in masters) {
   )
 }
 # DutyStations.Code is a unique row key; POI Code repeats across subelements, so key on both.
+# The current DutyStations is OPM's two-sheet .xlsx; the archived prior is the flat csv
+# (OPM's own through 2026-07, the build_labels-derived copy after). read_duty_stations()
+# reads either form into the same shape, so the diff does not depend on which arrived.
 rows[["DutyStations"]] <- check_input(
   "DutyStations",
-  find_code_table(ct, "DutyStations", "csv")$file, prior_file("DutyStations", "csv"), read_flat
+  find_code_table(ct, "DutyStations", "xlsx")$file, prior_file("DutyStations", "csv"),
+  read_duty_stations
 )
 rows[["POI"]] <- check_input("POI",
   find_code_table(ct, "POI", "csv")$file, prior_file("POI", "csv"), read_flat,

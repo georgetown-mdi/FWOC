@@ -83,6 +83,49 @@ read_code_table <- function(file_path, download_date) {
 }
 
 # ==========================================================================
+# DutyStations: workbook -> flat CSV shape
+# --------------------------------------------------------------------------
+# From 2026-09 OPM's Duty Stations page downloads only as .xlsx, split into a "US"
+# sheet and an "Other" (foreign) sheet, with the state column headed
+# "State/Territory". Everything downstream -- 08_bz_duty_station_state.R,
+# 13_duty_station_backfill.R, and the archived priors the gate diffs against --
+# reads the one-sheet CSV shape OPM served before, so the workbook is stacked back
+# into that shape here and setup/build_labels.R writes it out as
+# DutyStations_<date>.csv beside the workbook. The reshape is a pure function so
+# it is unit-testable without readxl.
+
+# Stack the US and Other sheets and restore the flat-CSV column name. Only the
+# two properties the reshape depends on are asserted; an added or dropped OPM
+# column is left for the gate's diff to report rather than stopped here.
+bind_duty_station_sheets <- function(us, other) {
+  if (!identical(names(us), names(other))) {
+    stop(
+      "DutyStations US and Other sheets have different columns: ",
+      paste(names(us), collapse = ", "), " vs ", paste(names(other), collapse = ", ")
+    )
+  }
+  if (!"State/Territory" %in% names(us)) {
+    stop("DutyStations sheets have no State/Territory column to rename to State.")
+  }
+  bind_rows(us, other) |>
+    rename(State = `State/Territory`)
+}
+
+# Read a DutyStations table in either form: the OPM .xlsx (two sheets, stacked
+# above) or the flat .csv (OPM's own download through 2026-07, and the derived
+# copy build_labels writes thereafter). One reader lets the gate diff this month's
+# workbook against last month's csv. All columns are read as character so the
+# zero-padded nine-character Code survives; na = "" per the repo convention.
+read_duty_stations <- function(path) {
+  if (grepl("\\.xlsx$", path)) {
+    sheet <- function(s) read_excel(path, sheet = s, col_types = "text")
+    bind_duty_station_sheets(sheet("US"), sheet("Other"))
+  } else {
+    read_csv(path, col_types = cols(.default = "c"), na = "")
+  }
+}
+
+# ==========================================================================
 # Time-varying label integrity: no per-code overlapping date windows
 # --------------------------------------------------------------------------
 # A code with overlapping [date_from, date_to] windows matches >1 label row in
