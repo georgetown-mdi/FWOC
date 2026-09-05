@@ -200,3 +200,92 @@ fwd_updated_periods <- function(current, baseline_path) {
     dplyr::filter(is.na(version_prior) | version > version_prior) |>
     dplyr::select(dataset, year, month)
 }
+
+# ==========================================================================
+# Late reporting: what the cycle's new/re-versioned files add to each flow period
+# --------------------------------------------------------------------------
+# acc_hive and sep_hive are partitioned by personnel-action EFFECTIVE month, not by
+# the month of the file a row arrived in, and OPM's monthly file carries actions
+# reported late -- effective dates reaching prior periods. So a "frozen" flow
+# period may legitimately grow, by exactly the rows the cycle's new or
+# re-versioned files hold for that effective month (net of rows a re-version
+# removed). emp_hive has no such spread: a file's rows all carry its own snapshot
+# month, so its rule in 05 ("a period may move only if its file was re-versioned")
+# stays as is. These helpers compute the expected per-period delta for the flows
+# from the raw files, independently of the hive, so 05 can require the observed
+# delta to equal it.
+
+# Same predicate as fwd_updated_periods(), but keeps the versions: version_prior is
+# NA for a period with no file in the baseline (a new month). NULL without a
+# baseline, as fwd_updated_periods().
+fwd_version_changes <- function(current, baseline_path) {
+  if (!file.exists(baseline_path)) {
+    return(NULL)
+  }
+  prior <- readr::read_csv(baseline_path,
+    na = "", show_col_types = FALSE,
+    col_types = readr::cols(dataset = "c", year = "i", month = "i", version = "i")
+  )
+  dplyr::left_join(current, prior, by = c("dataset", "year", "month"), suffix = c("", "_prior")) |>
+    dplyr::filter(is.na(version_prior) | version > version_prior) |>
+    dplyr::select(dataset, year, month, version, version_prior)
+}
+
+# Path of one raw OPM download, from the (dataset, period, version) key scan_fwd_versions()
+# parses out of the same name.
+fwd_file_path <- function(root, dataset, year, month, version) {
+  dirs <- c(emp = "employment", acc = "accessions", sep = "separations")
+  d <- dirs[[dataset]]
+  file.path(root, d, sprintf("%s_%04d%02d_%d.parquet", d, year, month, version))
+}
+
+# Rows of one raw accessions/separations file per effective (year, month). Streams the
+# one column through Arrow; nothing is materialised beyond the small count table.
+count_fwd_file_by_effective_month <- function(path) {
+  if (!file.exists(path)) {
+    stop("count_fwd_file_by_effective_month: raw file missing: ", path,
+      " -- 03 keeps every published version, so restore it before re-running.",
+      call. = FALSE
+    )
+  }
+  arrow::open_dataset(path) |>
+    dplyr::count(ym = personnel_action_effective_date_yyyymm) |>
+    dplyr::collect() |>
+    dplyr::filter(!is.na(ym)) |>
+    dplyr::transmute(
+      year = as.integer(substr(ym, 1, 4)),
+      month = as.integer(substr(ym, 5, 6)),
+      n = as.integer(n)
+    )
+}
+
+# Expected change per (dataset, year, month) from a set of version changes: for each
+# changed file, its current rows per effective month minus its prior version's (0 when
+# the period is new), summed over files. count_fn(dataset, year, month, version) returns
+# a tibble(year, month, n); it is an argument so the arithmetic is testable without
+# raw files. Periods absent from the result have an expected delta of 0.
+flow_expected_deltas <- function(changes, count_fn) {
+  empty <- tibble::tibble(
+    dataset = character(), year = integer(), month = integer(),
+    expected_delta = integer()
+  )
+  if (is.null(changes) || nrow(changes) == 0) {
+    return(empty)
+  }
+  per_file <- lapply(seq_len(nrow(changes)), function(i) {
+    ch <- changes[i, ]
+    cur <- count_fn(ch$dataset, ch$year, ch$month, ch$version)
+    if (is.na(ch$version_prior)) {
+      d <- dplyr::mutate(cur, expected_delta = n)
+    } else {
+      prior <- count_fn(ch$dataset, ch$year, ch$month, ch$version_prior)
+      d <- dplyr::full_join(cur, prior, by = c("year", "month"), suffix = c("_cur", "_prior")) |>
+        dplyr::mutate(expected_delta = dplyr::coalesce(n_cur, 0L) - dplyr::coalesce(n_prior, 0L))
+    }
+    dplyr::transmute(d, dataset = ch$dataset, year, month, expected_delta)
+  })
+  dplyr::bind_rows(per_file) |>
+    dplyr::group_by(dataset, year, month) |>
+    dplyr::summarise(expected_delta = sum(expected_delta), .groups = "drop") |>
+    dplyr::filter(expected_delta != 0L)
+}

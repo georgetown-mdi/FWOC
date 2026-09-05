@@ -3,11 +3,14 @@
 #   binary indicators take only {0,1,NA} and aren't degenerate (single-level, soft);
 #   continuous vars (pay, length of service, BLS macro) sit within plausible bounds (soft);
 #   month/quarter are in range and mutually
-#   consistent; the era time column is never null; and final per-period row counts
-#   for "frozen" months (those OPM did NOT re-version this cycle -- from the source
-#   file versions; the first run seeds both baselines and defers the check) are unchanged
-#   vs the prior run -- hard for all three, checked separately. An unexplained change
-#   halts the suite and holds both baselines at their prior values; a row in
+#   consistent; the era time column is never null; and final per-period row counts are
+#   stable vs the prior run -- hard for all three, checked separately. For emp a period is
+#   "frozen" unless OPM re-versioned its file this cycle (from the source file versions;
+#   the first run seeds both baselines and defers the check). For acc/sep, whose
+#   partitions are effective months that a new file or re-versioned file may back-fill with late-reported
+#   actions, a period may move by exactly what the cycle's new/re-versioned files
+#   contribute to it (computed from the raw files), and by nothing else. An unexplained
+#   change halts the suite and holds both baselines at their prior values; a row in
 #   metadata/validation/baselines/ex5_history_allowlist.csv accepts a reviewed change
 #   and lets them roll forward.
 #   No duplicate-pseudo_id check -- duplicate ids are an expected feature of the data.
@@ -214,13 +217,38 @@ if (is.null(cmp) && is.null(updated)) {
   # have moved; every other period is "frozen" and must still match last run's count. Keys go
   # to character because compare_to_baseline() stringifies both sides of its join.
   allow <- transmute(updated, dataset, year = as.character(year), month = as.character(month), allow = TRUE)
-  # Frozen periods whose count moved: everything cmp flagged, minus what `updated` allows.
-  unexpected_changes <- cmp |> filter(changed) |>
-    left_join(allow, by = c("dataset", "year", "month")) |> filter(is.na(allow))
+
+  # acc/sep are partitioned by EFFECTIVE month, and OPM's monthly file carries actions
+  # reported late -- 2026-07's file held ~4,000 accessions with effective dates back to
+  # 2024-07 -- so a frozen flow period grows every cycle and `allow` alone would halt every
+  # month (it did, 2026-08-23 and 2026-09-05). The permitted movement is instead computed
+  # from the raw files: each new or re-versioned acc/sep file's rows per effective month,
+  # minus its prior version's. That is exact (04 applies no row filter), independent of
+  # the hive, and subsumes the file's own month. emp keeps the `allow` rule: its file
+  # month IS its partition month, so late reporting cannot touch a frozen emp period.
+
+  flow_changes <- fwd_version_changes(cur_ver, ver_path) |> filter(dataset %in% c("acc", "sep"))
+
+  expected <- flow_expected_deltas(flow_changes, count_fn = function(dataset, year, month, version) {
+    count_fwd_file_by_effective_month(fwd_file_path("data_opm_gov", dataset, year, month, version))
+  }) |>
+    mutate(year = as.character(year), month = as.character(month))
+
+  # Periods whose count moved unexplained: for emp, a move outside `updated`; for acc/sep,
+  # a move that differs from what the cycle's files account for (0 where none touch it).
+  unexpected_changes <- cmp |>
+    filter(changed) |>
+    left_join(allow, by = c("dataset", "year", "month")) |>
+    left_join(expected, by = c("dataset", "year", "month")) |>
+    mutate(expected_delta = coalesce(expected_delta, 0L)) |>
+    filter(if_else(dataset == "emp", is.na(allow), delta != expected_delta))
 
   # Rendered as allowlist rows so a reviewed change can be pasted straight into
   # ex5_history_allowlist.csv; the reason column still has to be written by hand.
-  fmt <- function(df) paste(sprintf("%s,%s,%s,%+d", df$dataset, df$year, df$month, df$delta),
+  # For acc/sep the bracket shows what the files did account for, so the reviewer sees the
+  # unexplained remainder (delta minus expected) rather than re-deriving it.
+  fmt <- function(df) paste(sprintf("%s,%s,%s,%+d [files account for %+d]",
+                                    df$dataset, df$year, df$month, df$delta, df$expected_delta),
                             collapse = " | ")
 
   # Reviewed exceptions live in a committed allowlist, like ex2's and ex3's -- not an
