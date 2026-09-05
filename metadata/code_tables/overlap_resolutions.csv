@@ -27,3 +27,5 @@ subagency_labels.csv,ARE1,1986-09-01,2005-01-31,"IMMEDIATE OFFICE OF THE COMMAND
 subagency_labels.csv,GB00,2019-10-01,2020-02-01,"INTERNATIONAL DEVELOPMENT FINANCE CORPORATION",DFC formed on 2019-12-20; window spans the transition so the successor name is kept
 agency_labels.csv,GB,2019-10-01,2020-02-01,"INTERNATIONAL DEVELOPMENT FINANCE CORPORATION",DFC formed on 2019-12-20; window spans the transition so the successor name is kept
 agency_labels.csv,HS,2001-09-01,2001-09-30,"OFFICE OF HOMELAND SECURITY",DHS not created until 2003 - note no observations for HS in 2001
+subagency_labels.csv,DJ15,2003-01-01,2005-01-31,"BUREAU OF ALCOHOL, TOBACCO, FIREARMS AND EXPLOSIVES",keep = OPM master CurrentValues 2026-09-05; drop the Oxford-comma variant OPM added to this window in 2026-09 (comma form asserted in subagency_labels_fwoc.csv)
+subagency_labels.csv,SM04,2026-04-01,2026-05-06,"JOHN F. KENNEDY CENTER FOR THE PERFORMING ARTS",keep = OPM master CurrentValues 2026-09-05; the 2026-09 master reverts SM04 to the Kennedy Center name from 2026-05-07 and archives this window under both names -- keep the Kennedy Center name throughout
