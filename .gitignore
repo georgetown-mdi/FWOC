@@ -203,3 +203,11 @@ README.html
 # --- Pipeline run logs ---
 fwoc_build_log_*.txt
 rebuild_log_*.txt
+
+# --- Local working notes and internal ops references ---
+# Machine- and process-specific notes for one checkout. The file's own header
+# states it is gitignored; until now nothing enforced that.
+CLAUDE.local.md
+# Superset dashboard query definitions -- an internal ops reference against the
+# BigQuery external tables, not an input to or output of this pipeline.
+aggregate/superset_*.md
