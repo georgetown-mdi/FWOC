@@ -156,10 +156,11 @@ stop_if_not_unique(city_cw,  "duty_station_code", "city_cw")
 
 # Written for provenance only -- nothing in the pipeline reads them back. They
 # record what the build actually used, so a published crosswalk can be diffed
-# against a later monthly download. state_cw is sorted first: it is built from an
-# Arrow distinct(), whose row order is not stable between runs, and an unsorted
-# write could show reorder diffs every build whether or not any content changed.
-# terr_cw is a tribble, so its order is already fixed.
+# against a later monthly download. state_cw is sorted first: the distinct() on
+# the DutyStations rows above collapses ~43k stations to one row per state in
+# order of first appearance, so the row order follows the download, which OPM
+# reorders from time to time; an unsorted write would show reorder diffs whether
+# or not any content changed. terr_cw is a tribble, so its order is fixed.
 write_csv(arrange(state_cw, fips_code), "metadata/crosswalks/state_fips_crosswalk.csv", na = "")
 write_csv(terr_cw,  "metadata/crosswalks/territory_crosswalk.csv",  na = "")
 
