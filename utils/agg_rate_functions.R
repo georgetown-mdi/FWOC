@@ -3,8 +3,9 @@
 #   grouping vectors are sourced by every aggregate/agg_*.R builder and by the
 #   aggregate reconciliation check, so all of them apply the IDENTICAL universe
 #   and scoping (exec branch, FWOC-agency filter, the 00/01/04 drop, appointee,
-#   DoD fold) from one definition -- a divergence would surface as phantom
-#   drift. Pure definitions, no side effects; the caller attaches arrow + dplyr.
+#   DoD fold, unlabelled-code sentinel) from one definition -- a divergence
+#   would surface as phantom drift. Pure definitions, no side effects; the
+#   caller attaches arrow + dplyr.
 
 # Full grain for the acc/sep numerator tables (keeps nsftp + appointee
 # subgroups).
@@ -80,6 +81,25 @@ prep <- function(ds) {
       ),
       agency_code = if_else(
         agency_code_fwoc == "DD", agency_code_fwoc, agency_code
+      )
+    ) |>
+    mutate(
+      # A code with no label (OPM's "**" not-reported sentinel, BZ-era codes
+      # absent from the OPM table, and any FWOC label-window gap) would
+      # otherwise surface as a single <NULL> entry in every Superset dropdown.
+      # Naming it by code keeps each such bucket distinct and visible. The
+      # code itself is never changed, so joins are unaffected. A separate
+      # mutate() so it runs after the DoD fold and DD** is named from the
+      # folded code.
+      agency_subelement = if_else(
+        is.na(agency_subelement) & !is.na(agency_subelement_code),
+        paste0(agency_subelement_code, ": No label reported"),
+        agency_subelement
+      ),
+      agency_subelement_fwoc = if_else(
+        is.na(agency_subelement_fwoc) & !is.na(agency_subelement_code_fwoc),
+        paste0(agency_subelement_code_fwoc, ": No label reported"),
+        agency_subelement_fwoc
       )
     )
 }
