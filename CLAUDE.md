@@ -104,3 +104,7 @@ Pure helpers (`utils/*` + pure transforms) get a `testthat` test with a tiny fix
 ### Surfacing decisions
 
 Flag non-obvious or judgment-call design choices in your message so a human can review before they land.
+
+### GitHub
+
+Sessions may create and commit to a local branch in their own worktree so work is not lost. Do not write to the GitHub remote in any form (push, create or delete a remote branch, open a pull request, force-push) without approval given in the current session for that specific action. Approval for one action does not cover the next. Read-only remote operations (fetch, log, diff against origin) are fine.
