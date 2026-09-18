@@ -196,7 +196,7 @@ join_code_labels <- function(data, lbls, date_var) {
 
 # Appointment types that count as non-seasonal full-time permanent when paired
 # with a full-time work schedule.
-nsftp_appt_codes <- c("10", "15", "30", "32", "34", "35", "36", "38", "50", "55")
+nsftp_appt_codes <- c("10", "15", "30", "32", "34", "35", "36", "38", "50", "55", "67")
 
 # The three era-harmonizations that apply to all three hives.
 #   age_bracket:           BZ is title case, FWD upper case.
