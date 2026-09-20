@@ -24,7 +24,7 @@ source("utils/label_functions.R")
 # ============================================================
 
 # Legislative branch agency codes.
-lb_codes <- c("ZU", "YF", "LP", "ZL", "YG", "ZS", "ZP", "LA", "LD", "LG", "LC", "LB")
+lb_codes <- c("ZU", "YF", "LP", "ZL", "YG", "ZS", "ZP", "LA", "LD", "LG", "LC", "LB", "ZG")
 
 # The columns this script adds. Listed once and dropped before they are
 # recomputed in each block, so a re-run derives rather than colliding.
