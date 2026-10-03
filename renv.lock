@@ -96,16 +96,6 @@
       ],
       "Hash": "71778c0b60bbf439ac64e6a8be695917"
     },
-    "brio": {
-      "Package": "brio",
-      "Version": "1.1.5",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R"
-      ],
-      "Hash": "c1ee497a6d999947c2c224ae46799b1a"
-    },
     "bslib": {
       "Package": "bslib",
       "Version": "0.11.0",
@@ -138,20 +128,6 @@
         "rlang"
       ],
       "Hash": "cd9a672193789068eb5a2aad65a0dedf"
-    },
-    "callr": {
-      "Package": "callr",
-      "Version": "3.8.0",
-      "Source": "Repository",
-      "Repository": "https://packagemanager.posit.co/cran/latest",
-      "Requirements": [
-        "R",
-        "R6",
-        "otel",
-        "processx",
-        "utils"
-      ],
-      "Hash": "cb2799e0a02c2ac4d0395b0e29bb6799"
     },
     "cellranger": {
       "Package": "cellranger",
@@ -228,34 +204,6 @@
         "methods"
       ],
       "Hash": "da9ddede68a6f6e5d3098c0ab81b6e1f"
-    },
-    "desc": {
-      "Package": "desc",
-      "Version": "1.4.3",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "R6",
-        "cli",
-        "utils"
-      ],
-      "Hash": "99b79fcbd6c4d1ce087f5c5c758b384f"
-    },
-    "diffobj": {
-      "Package": "diffobj",
-      "Version": "0.3.8",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "crayon",
-        "methods",
-        "stats",
-        "tools",
-        "utils"
-      ],
-      "Hash": "fc69a29e9a851af8d0d07b3d4ed1dea4"
     },
     "digest": {
       "Package": "digest",
@@ -554,16 +502,6 @@
       ],
       "Hash": "6994d1c3ea954f29de6aeca5da95c99d"
     },
-    "otel": {
-      "Package": "otel",
-      "Version": "0.2.0",
-      "Source": "Repository",
-      "Repository": "https://packagemanager.posit.co/cran/latest",
-      "Requirements": [
-        "R"
-      ],
-      "Hash": "627d6993db1043703c0b084fa432f21f"
-    },
     "pillar": {
       "Package": "pillar",
       "Version": "1.11.1",
@@ -580,21 +518,6 @@
       ],
       "Hash": "1395e64f2689ffd503657778e810cee2"
     },
-    "pkgbuild": {
-      "Package": "pkgbuild",
-      "Version": "1.4.8",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "R6",
-        "callr",
-        "cli",
-        "desc",
-        "processx"
-      ],
-      "Hash": "fc9fc4162e79a94f760aac8d328ee6c9"
-    },
     "pkgconfig": {
       "Package": "pkgconfig",
       "Version": "2.0.3",
@@ -605,34 +528,6 @@
       ],
       "Hash": "01f28d4278f15c76cddbea05899c5d6f"
     },
-    "pkgload": {
-      "Package": "pkgload",
-      "Version": "1.5.3",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "cli",
-        "desc",
-        "fs",
-        "glue",
-        "lifecycle",
-        "methods",
-        "pkgbuild",
-        "processx",
-        "rlang",
-        "rprojroot",
-        "utils"
-      ],
-      "Hash": "912acb56e1e3362766b63278d8b60a61"
-    },
-    "praise": {
-      "Package": "praise",
-      "Version": "1.0.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "a555924add98c99d2f411e37e7d25e9f"
-    },
     "prettyunits": {
       "Package": "prettyunits",
       "Version": "1.2.0",
@@ -642,19 +537,6 @@
         "R"
       ],
       "Hash": "6b01fc98b1e86c4f705ce9dcfd2f57c7"
-    },
-    "processx": {
-      "Package": "processx",
-      "Version": "3.9.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "R6",
-        "ps",
-        "utils"
-      ],
-      "Hash": "188d6caf38e81bf15b5e918726a6fd3d"
     },
     "progress": {
       "Package": "progress",
@@ -669,17 +551,6 @@
         "prettyunits"
       ],
       "Hash": "f4625e061cb2865f111b47ff163a5ca6"
-    },
-    "ps": {
-      "Package": "ps",
-      "Version": "1.9.3",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "utils"
-      ],
-      "Hash": "83e7e486c434e7acc71766dfc20adf2b"
     },
     "purrr": {
       "Package": "purrr",
@@ -797,16 +668,6 @@
       ],
       "Hash": "f34039d57d861d2869cbf9be813ed08e"
     },
-    "rprojroot": {
-      "Package": "rprojroot",
-      "Version": "2.1.1",
-      "Source": "Repository",
-      "Repository": "https://packagemanager.posit.co/cran/latest",
-      "Requirements": [
-        "R"
-      ],
-      "Hash": "b2453de2d29aa646afe4781defdc7903"
-    },
     "sass": {
       "Package": "sass",
       "Version": "0.4.10",
@@ -857,34 +718,6 @@
       "Source": "Repository",
       "Repository": "https://packagemanager.posit.co/cran/latest",
       "Hash": "de342ebfebdbf40477d0758d05426646"
-    },
-    "testthat": {
-      "Package": "testthat",
-      "Version": "3.3.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "R6",
-        "brio",
-        "callr",
-        "cli",
-        "desc",
-        "evaluate",
-        "jsonlite",
-        "lifecycle",
-        "magrittr",
-        "methods",
-        "pkgload",
-        "praise",
-        "processx",
-        "ps",
-        "rlang",
-        "utils",
-        "waldo",
-        "withr"
-      ],
-      "Hash": "0ff174f3cfef696f36a70dc84a0fd839"
     },
     "tibble": {
       "Package": "tibble",
@@ -1036,21 +869,6 @@
         "withr"
       ],
       "Hash": "1e9494eda38f3418f71474363293da2a"
-    },
-    "waldo": {
-      "Package": "waldo",
-      "Version": "0.6.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "cli",
-        "diffobj",
-        "glue",
-        "methods",
-        "rlang"
-      ],
-      "Hash": "b7b91294ee9418a54527a9a9d8677597"
     },
     "withr": {
       "Package": "withr",
