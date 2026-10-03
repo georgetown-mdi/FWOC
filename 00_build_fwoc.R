@@ -27,11 +27,14 @@
 # Run from the repo root:
 #   source("00_build_fwoc.R")   or   Rscript 00_build_fwoc.R
 #
-# Progress + each step's stdout/stderr stream to ./fwoc_build_log_<timestamp>.txt
+# Progress + each step's stdout/stderr stream to logs/fwoc_build_log_<timestamp>.txt
+# (logs/ is gitignored and created here if absent).
 
 start_time <- Sys.time()
-log_file   <- paste0("fwoc_build_log_",
-                     format(start_time, "%Y%m%d_%H%M%S"), ".txt")
+log_dir    <- "logs"
+dir.create(log_dir, showWarnings = FALSE)
+log_file   <- file.path(log_dir, paste0("fwoc_build_log_",
+                                        format(start_time, "%Y%m%d_%H%M%S"), ".txt"))
 
 log_line <- function(msg) {
   cat(msg)
