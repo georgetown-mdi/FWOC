@@ -211,3 +211,7 @@ CLAUDE.local.md
 # Superset dashboard query definitions -- an internal ops reference against the
 # BigQuery external tables, not an input to or output of this pipeline.
 aggregate/superset_*.md
+# Working record of the agency and subagency label coding: rulings, sweeps,
+# verification runs, logs and the provenance record. Internal; kept on disk only.
+# The reviewed inputs the pipeline reads are in metadata/labels/fwoc_ship/.
+docs/fwoc_agency_subagency_labels/
