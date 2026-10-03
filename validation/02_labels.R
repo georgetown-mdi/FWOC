@@ -38,6 +38,8 @@ pairs <- list(
   list(code = "agency_subelement_code",      label = "agency_subelement",      var = "agency_subelement",      lkp = "subagency_labels.csv"),
   list(code = "agency_code_fwoc",            label = "agency_fwoc",            var = "agency_fwoc",            lkp = "agency_labels_fwoc.csv"),
   list(code = "agency_subelement_code_fwoc", label = "agency_subelement_fwoc", var = "agency_subelement_fwoc", lkp = "subagency_labels_fwoc.csv"),
+  list(code = "agency_code_fwoc",            label = "agency_fwoc_experimental",            var = "agency_fwoc_experimental",            lkp = "agency_labels_fwoc_experimental.csv"),
+  list(code = "agency_subelement_code_fwoc", label = "agency_subelement_fwoc_experimental", var = "agency_subelement_fwoc_experimental", lkp = "subagency_labels_fwoc_experimental.csv"),
   list(code = "education_level_code",        label = "education_level",        var = "education_level",        lkp = "ed_labels.csv"),
   list(code = "appointment_type_code",       label = "appointment_type",       var = "appointment_type",       lkp = "appt_type_labels.csv"),
   list(code = "pay_plan_code",               label = "pay_plan",               var = "pay_plan",               lkp = "pay_plan_labels.csv"),
@@ -129,11 +131,11 @@ readr::write_csv(bind_rows(undoc), file.path(out_dir, "ex2_undocumented_codes.cs
 # setup/build_labels.R prevents that at build time: normalize_label_text() collapses
 # provably-cosmetic variants, metadata/code_tables/overlap_resolutions.csv resolves
 # genuine conflicts by hand, and assert_no_label_overlaps() hard-fails on anything
-# left -- so for those this is a post-build backstop. The two *_labels_fwoc.csv files
-# are different: nothing in the repo writes them (they are hand-maintained, carrying
-# the OPM corrections 10_agency_names.R reads), so they get no build-time guard and
-# this check is the ONLY one they receive. 03_reconcile.R is the end-to-end row-count
-# check either way.
+# left -- so for those this is a post-build backstop, as it is for the two
+# *_labels_fwoc.csv files, which setup/build_fwoc_ship_labels.R guards the same way.
+# The two *_labels_fwoc_experimental.csv files are different: nothing in the repo
+# writes them, so they get no build-time guard and this check is the ONLY one they
+# receive. 03_reconcile.R is the end-to-end row-count check either way.
 ov_allow <- load_allowlist("metadata/validation/baselines/ex2_overlap_allowlist.csv")
 
 # label_window_overlaps() is the shared detector in utils/code_table_functions.R

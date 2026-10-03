@@ -6,13 +6,16 @@
 #            - agency_code_fwoc / agency_fwoc (AF/AR/NV collapsed to DD)
 #            - agency_subelement_code_fwoc / agency_subelement_fwoc
 #              (AF*/AR*/NV* sub-subagency codes rolled up to DDAF/DDAR/DDNV;
-#              other codes pass through unchanged, but labels come from
-#              subagency_labels_fwoc.csv which carries minor OPM corrections
-#              for the 15 executive departments).
-#          The fwoc lookups also carry four correction-tracking columns, joined
-#          at both the agency level (_agency suffix) and subagency level
-#          (_subagency suffix): case, opm_label_misleading (int8 1/0), func_id
-#          and reorg_id.
+#              other codes pass through unchanged). Labels come from
+#              agency_labels_fwoc.csv / subagency_labels_fwoc.csv, built by
+#              setup/build_fwoc_ship_labels.R, which also carry
+#              opm_label_misleading (int8 1/0), joined at the agency level
+#              (_agency suffix) and subagency level (_subagency suffix).
+#            - agency_fwoc_experimental / agency_subelement_fwoc_experimental,
+#              with case, func_id and reorg_id at both levels (each suffixed
+#              _experimental), from the *_labels_fwoc_experimental.csv lookups.
+#              These are the unvetted full coding; their label windows differ
+#              from the fwoc lookups', so they are joined separately.
 #          Runs after 08 and 09, which write the BZ and FWD rows of the final
 #          hives, and before new variables and the remaining label joins so that
 #          downstream scripts operate on a narrower hive.
@@ -34,22 +37,29 @@ lbl_path <- "metadata/labels/"
 agy_map      <- read_csv(paste0(lbl_path, "agency_labels.csv"),    col_types = "ccDD", na = "")
 subagy_map   <- read_csv(paste0(lbl_path, "subagency_labels.csv"), col_types = "ccDD", na = "")
 
-# fwoc lookups now carry, alongside (code, label, date_from, date_to), four
-# correction-tracking columns: case, opm_label_misleading, func_id, reorg_id.
-# cols_only() reads exactly those eight and drops the unwanted opm_label_note
-# and source_document columns. opm_label_misleading (TRUE/FALSE, with the odd
-# stray "F" parsed as FALSE) is recoded to an int8 1/0 indicator downstream;
-# case, func_id and reorg_id stay character. na = "" keeps any literal
-# "NA"-style code as a string rather than dropping it to missing.
+# The fwoc lookups carry opm_label_misleading alongside (code, label, date_from,
+# date_to); the experimental lookups carry case, func_id and reorg_id.
+# cols_only() reads exactly the listed columns and drops the rest
+# (opm_label_note, source_document, and the experimental files' own
+# opm_label_misleading, which the hives take from the fwoc lookups).
+# opm_label_misleading (TRUE/FALSE) is recoded to an int8 1/0 indicator
+# downstream; case, func_id and reorg_id stay character. na = "" keeps any
+# literal "NA"-style code as a string rather than dropping it to missing.
 fwoc_cols <- cols_only(
   code                 = col_character(),
   label                = col_character(),
   date_from            = col_date(),
   date_to              = col_date(),
-  case                 = col_character(),
-  opm_label_misleading = col_logical(),
-  func_id              = col_character(),
-  reorg_id             = col_character()
+  opm_label_misleading = col_logical()
+)
+fwoc_exp_cols <- cols_only(
+  code      = col_character(),
+  label     = col_character(),
+  date_from = col_date(),
+  date_to   = col_date(),
+  case      = col_character(),
+  func_id   = col_character(),
+  reorg_id  = col_character()
 )
 
 # Drop AF/AR/NV from the agency map since those codes are collapsed to DD before the join.
@@ -62,21 +72,32 @@ subagy_fwoc_map <- read_csv(paste0(lbl_path, "subagency_labels_fwoc.csv"),
                             col_types = fwoc_cols, na = "") |>
   mutate(opm_label_misleading = as.integer(opm_label_misleading))
 
-# Pass-through specs for the four correction columns. Agency-level columns get
-# the _agency suffix, subagency-level the _subagency suffix; opm_label_misleading
-# is typed int8 to match the project's binary-indicator convention, the others
-# stay utf8.
+agy_fwoc_exp_map <- read_csv(paste0(lbl_path, "agency_labels_fwoc_experimental.csv"),
+                             col_types = fwoc_exp_cols, na = "") |>
+  filter(!code %in% c("AF", "AR", "NV"))
+
+subagy_fwoc_exp_map <- read_csv(paste0(lbl_path, "subagency_labels_fwoc_experimental.csv"),
+                                col_types = fwoc_exp_cols, na = "")
+
+# Pass-through specs for the columns that ride along with each label.
+# Agency-level columns get the _agency suffix, subagency-level the _subagency
+# suffix; opm_label_misleading is typed int8 to match the project's
+# binary-indicator convention, the others stay utf8.
 agy_extra <- list(
-  case_agency                 = list(col = "case",                 type = utf8()),
-  opm_label_misleading_agency = list(col = "opm_label_misleading", type = int8()),
-  func_id_agency              = list(col = "func_id",              type = utf8()),
-  reorg_id_agency             = list(col = "reorg_id",             type = utf8())
+  opm_label_misleading_agency = list(col = "opm_label_misleading", type = int8())
 )
 subag_extra <- list(
-  case_subagency                 = list(col = "case",                 type = utf8()),
-  opm_label_misleading_subagency = list(col = "opm_label_misleading", type = int8()),
-  func_id_subagency              = list(col = "func_id",              type = utf8()),
-  reorg_id_subagency             = list(col = "reorg_id",             type = utf8())
+  opm_label_misleading_subagency = list(col = "opm_label_misleading", type = int8())
+)
+agy_exp_extra <- list(
+  case_agency_experimental     = list(col = "case",     type = utf8()),
+  func_id_agency_experimental  = list(col = "func_id",  type = utf8()),
+  reorg_id_agency_experimental = list(col = "reorg_id", type = utf8())
+)
+subag_exp_extra <- list(
+  case_subagency_experimental     = list(col = "case",     type = utf8()),
+  func_id_subagency_experimental  = list(col = "func_id",  type = utf8()),
+  reorg_id_subagency_experimental = list(col = "reorg_id", type = utf8())
 )
 
 # The label columns this script adds. Listed once and dropped before the joins
@@ -85,10 +106,12 @@ lbl_cols <- c(
   "agency", "agency_subelement",
   "agency_code_fwoc", "agency_fwoc",
   "agency_subelement_code_fwoc", "agency_subelement_fwoc",
-  "case_agency", "opm_label_misleading_agency",
-  "func_id_agency", "reorg_id_agency",
-  "case_subagency", "opm_label_misleading_subagency",
-  "func_id_subagency", "reorg_id_subagency"
+  "opm_label_misleading_agency", "opm_label_misleading_subagency",
+  "agency_fwoc_experimental", "agency_subelement_fwoc_experimental",
+  "case_agency_experimental", "func_id_agency_experimental",
+  "reorg_id_agency_experimental",
+  "case_subagency_experimental", "func_id_subagency_experimental",
+  "reorg_id_subagency_experimental"
 )
 
 # The FWOC code derivations are each needed twice per hive -- once to build the
@@ -145,6 +168,8 @@ agy_lbl        <- label_codes(agy_obs,        agy_map,         "agency_code",   
 subag_lbl      <- label_codes(subag_obs,      subagy_map,      "agency_subelement_code",      "date", "agency_subelement")
 agy_fwoc_lbl   <- label_codes(agy_fwoc_obs,   agy_fwoc_map,    "agency_code_fwoc",            "date", "agency_fwoc",            extra = agy_extra)
 subag_fwoc_lbl <- label_codes(subag_fwoc_obs, subagy_fwoc_map, "agency_subelement_code_fwoc", "date", "agency_subelement_fwoc", extra = subag_extra)
+agy_exp_lbl    <- label_codes(agy_fwoc_obs,   agy_fwoc_exp_map,    "agency_code_fwoc",            "date", "agency_fwoc_experimental",            extra = agy_exp_extra)
+subag_exp_lbl  <- label_codes(subag_fwoc_obs, subagy_fwoc_exp_map, "agency_subelement_code_fwoc", "date", "agency_subelement_fwoc_experimental", extra = subag_exp_extra)
 
 rm(emp_meta, agy_obs, subag_obs, agy_fwoc_obs, subag_fwoc_obs)
 gc()
@@ -175,6 +200,8 @@ for (i in seq_along(parts)) {
     add_subelement_code_fwoc() |>
     left_join(agy_fwoc_lbl,   by = c("date", "agency_code_fwoc"),            na_matches = "never") |>
     left_join(subag_fwoc_lbl, by = c("date", "agency_subelement_code_fwoc"), na_matches = "never") |>
+    left_join(agy_exp_lbl,    by = c("date", "agency_code_fwoc"),            na_matches = "never") |>
+    left_join(subag_exp_lbl,  by = c("date", "agency_subelement_code_fwoc"), na_matches = "never") |>
     compute() |>
     write_parquet(tmp, compression = "zstd", use_dictionary = FALSE)
 
@@ -183,7 +210,7 @@ for (i in seq_along(parts)) {
   gc()
 }
 
-rm(agy_lbl, subag_lbl, agy_fwoc_lbl, subag_fwoc_lbl)
+rm(agy_lbl, subag_lbl, agy_fwoc_lbl, subag_fwoc_lbl, agy_exp_lbl, subag_exp_lbl)
 gc()
 
 # ============================================================
@@ -213,6 +240,8 @@ agy_lbl        <- label_codes(agy_obs,        agy_map,         "agency_code",   
 subag_lbl      <- label_codes(subag_obs,      subagy_map,      "agency_subelement_code",      "join_date", "agency_subelement")
 agy_fwoc_lbl   <- label_codes(agy_fwoc_obs,   agy_fwoc_map,    "agency_code_fwoc",            "join_date", "agency_fwoc",            extra = agy_extra)
 subag_fwoc_lbl <- label_codes(subag_fwoc_obs, subagy_fwoc_map, "agency_subelement_code_fwoc", "join_date", "agency_subelement_fwoc", extra = subag_extra)
+agy_exp_lbl    <- label_codes(agy_fwoc_obs,   agy_fwoc_exp_map,    "agency_code_fwoc",            "join_date", "agency_fwoc_experimental",            extra = agy_exp_extra)
+subag_exp_lbl  <- label_codes(subag_fwoc_obs, subagy_fwoc_exp_map, "agency_subelement_code_fwoc", "join_date", "agency_subelement_fwoc_experimental", extra = subag_exp_extra)
 
 rm(agy_obs, subag_obs, agy_fwoc_obs, subag_fwoc_obs)
 
@@ -224,9 +253,11 @@ acc <- acc |>
   add_subelement_code_fwoc() |>
   left_join(agy_fwoc_lbl,   by = c("join_date", "agency_code_fwoc"),            na_matches = "never") |>
   left_join(subag_fwoc_lbl, by = c("join_date", "agency_subelement_code_fwoc"), na_matches = "never") |>
+  left_join(agy_exp_lbl,    by = c("join_date", "agency_code_fwoc"),            na_matches = "never") |>
+  left_join(subag_exp_lbl,  by = c("join_date", "agency_subelement_code_fwoc"), na_matches = "never") |>
   select(-join_date)
 
-rm(agy_lbl, subag_lbl, agy_fwoc_lbl, subag_fwoc_lbl)
+rm(agy_lbl, subag_lbl, agy_fwoc_lbl, subag_fwoc_lbl, agy_exp_lbl, subag_exp_lbl)
 
 write_dataset(acc,
               path                   = "acc_hive",
@@ -267,6 +298,8 @@ agy_lbl        <- label_codes(agy_obs,        agy_map,         "agency_code",   
 subag_lbl      <- label_codes(subag_obs,      subagy_map,      "agency_subelement_code",      "join_date", "agency_subelement")
 agy_fwoc_lbl   <- label_codes(agy_fwoc_obs,   agy_fwoc_map,    "agency_code_fwoc",            "join_date", "agency_fwoc",            extra = agy_extra)
 subag_fwoc_lbl <- label_codes(subag_fwoc_obs, subagy_fwoc_map, "agency_subelement_code_fwoc", "join_date", "agency_subelement_fwoc", extra = subag_extra)
+agy_exp_lbl    <- label_codes(agy_fwoc_obs,   agy_fwoc_exp_map,    "agency_code_fwoc",            "join_date", "agency_fwoc_experimental",            extra = agy_exp_extra)
+subag_exp_lbl  <- label_codes(subag_fwoc_obs, subagy_fwoc_exp_map, "agency_subelement_code_fwoc", "join_date", "agency_subelement_fwoc_experimental", extra = subag_exp_extra)
 
 rm(agy_obs, subag_obs, agy_fwoc_obs, subag_fwoc_obs)
 
@@ -278,9 +311,11 @@ sep <- sep |>
   add_subelement_code_fwoc() |>
   left_join(agy_fwoc_lbl,   by = c("join_date", "agency_code_fwoc"),            na_matches = "never") |>
   left_join(subag_fwoc_lbl, by = c("join_date", "agency_subelement_code_fwoc"), na_matches = "never") |>
+  left_join(agy_exp_lbl,    by = c("join_date", "agency_code_fwoc"),            na_matches = "never") |>
+  left_join(subag_exp_lbl,  by = c("join_date", "agency_subelement_code_fwoc"), na_matches = "never") |>
   select(-join_date)
 
-rm(agy_lbl, subag_lbl, agy_fwoc_lbl, subag_fwoc_lbl)
+rm(agy_lbl, subag_lbl, agy_fwoc_lbl, subag_fwoc_lbl, agy_exp_lbl, subag_exp_lbl)
 
 write_dataset(sep,
               path                   = "sep_hive",
