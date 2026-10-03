@@ -215,3 +215,8 @@ aggregate/superset_*.md
 # verification runs, logs and the provenance record. Internal; kept on disk only.
 # The reviewed inputs the pipeline reads are in metadata/labels/fwoc_ship/.
 docs/fwoc_agency_subagency_labels/
+# testthat suite for the pure helpers, and the CI workflow that runs it. Kept on
+# disk and run locally; publishing them is deferred to V2. Remove these rules
+# when the tests are published.
+tests/
+.github/
