@@ -24,10 +24,16 @@ The only top-level era split is BZ vs FWD — branch on that, not on BZ's three 
 The repository root **is** the project root — run scripts from here and reference paths root-relative (`metadata/...`, `utils/...`, `source("utils/x.R")`).
 
 ```
-setup/     Builders of inputs to the main ETL pipeline scripts
-utils/     Reusable helpers sourced by the scripts
-metadata/  Static inputs used by the main ETL pipeline scripts
-tests/     testthat suite for the pure helpers (run by CI)
+00_build_fwoc.R  Runs the numbered ETL steps (01–17), then aggregate, validation, codebook
+setup/           Builders of inputs to the main ETL pipeline scripts (run 00_run_setup.R first)
+utils/           Reusable helpers sourced by the scripts
+metadata/        Static inputs used by the main ETL pipeline scripts
+crosswalks/      Builder of the PATCO crosswalk consumed by step 12
+aggregate/       Builders of the dashboard aggregate tables
+validation/      Post-build validation suite; gates the codebook and publish steps
+codebook/        Rebuilds the codebook table from the built hives
+docs/            The codebook as a Quarto document; render from the root (see _quarto.yml)
+quick_start_code/  Example scripts for users of the published data; not part of the build
 ```
 
 ## Data model (descriptive)
@@ -99,7 +105,7 @@ arrow_table(schema=): Arrow binds schema fields to data columns by position, not
 
 ### Tests
 
-Pure helpers (`utils/*` + pure transforms) get a `testthat` test with a tiny fixture (build it in a `tempdir()` when simple). IO/hive pipeline steps are **not** unit-tested — `validation/` is their regression check. The suite runs with `Rscript tests/run_tests.R` (also run in CI).
+Pure helpers (`utils/*` + pure transforms) get a `testthat` test with a tiny fixture (build it in a `tempdir()` when simple). IO/hive pipeline steps are **not** unit-tested — `validation/` is their regression check. The suite lives in `tests/` and runs with `Rscript tests/run_tests.R`; it is not yet published, so a public clone has no `tests/` directory.
 
 ### Surfacing decisions
 
