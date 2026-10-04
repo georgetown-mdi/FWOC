@@ -6,12 +6,12 @@
 #          agency_code_fwoc, which 10 nulls for the codes absent from the OPM
 #          master, to null this script's indicators for those rows.
 #          Also reads the hand-curated EOP membership table at
-#          metadata/eop/EOP.xlsx.
+#          metadata/eop/eop_labels_fwoc.csv.
 
 library(arrow)
 library(dplyr)
 library(lubridate)
-library(readxl)
+library(readr)
 library(stringr)
 # data.table is attached for label_codes(), which is defined in
 # utils/label_functions.R and calls data.table verbs without attaching it.
@@ -37,17 +37,26 @@ derived_cols <- c(
 # EOP data
 # ============================================================
 
-# read_excel() treats only empty cells as missing, so the literal agency code
-# "NA" (NA00, National Aeronautics and Space Council) survives as a string.
-# An open-ended membership is recorded as the literal string "Present" (15 rows,
-# no cell is empty), which col_types = "date" cannot parse: read_excel warns
-# "Expecting date ... got 'Present'" and returns NA. Those NAs are closed at
-# 2026-12-31 so the date-window join has a bound to compare against. NB this
-# fills ANY unparseable date, so a malformed entry would also be silently
-# extended rather than flagged.
-eop <- read_excel(
-  path = "metadata/eop/EOP.xlsx",
-  col_types = c("text", "text", "date", "date", "text", "numeric")
+# na = "" so the literal agency code "NA" (NA00, National Aeronautics and Space
+# Council) survives as a string. An open-ended membership has an empty
+# `through`, which reads as NA and is closed at 2026-12-31 so the date-window
+# join has a bound to compare against. NB this fills ANY date that fails to
+# parse, so a malformed entry would also be extended (read_csv warns) rather
+# than stop the run.
+#
+# The WH rows overlap on purpose. The table carries the EOP itself (WH) and its
+# subelements WH01-WH05, which all truncate to "WH" below, and WH01 is core
+# while the others are not, which an agency-level join cannot express. No WH
+# record has ever appeared in the data. If one does, label_codes() finds two
+# rows for it and stops the run, so the coding gets decided rather than
+# guessed. Do not tidy the overlap away.
+eop <- read_csv(
+  "metadata/eop/eop_labels_fwoc.csv",
+  col_types = cols(
+    eop_agency_code = "c", eop_agency_name = "c", eop = "i",
+    core_eop = "i", from = "D", through = "D"
+  ),
+  na = ""
 ) |>
   mutate(through = if_else(is.na(through), ymd("2026-12-31"), through))
 

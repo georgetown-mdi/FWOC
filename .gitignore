@@ -171,6 +171,8 @@ data_opm_gov/
 export/
 # published to GCS by aggregate/push_to_gcs.R, then read by BigQuery/Superset
 aggregate_data/
+# EOP indicator coding docs
+metadata/eop/eop_coding_source
 
 # --- Large referenced data: fetched from R2/OSF or regenerated ---
 # raw BLS dumps -- setup/get_bls_data.R
