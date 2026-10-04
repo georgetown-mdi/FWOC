@@ -57,7 +57,7 @@ for (col in hive_flags) {
 }
 
 # col is the for() loop variable, which R leaves bound after the loop ends.
-# Clearing the scratch objects leaves only `manifest` and the three functions
+# Clearing the scratch objects leaves only `manifest` and the four functions
 # live: vars_marked() and check_manifest() resolve names against this
 # environment, so a stray binding could satisfy a typo instead of erroring.
 rm(bad, col, hive_flags)
@@ -129,6 +129,15 @@ finalize <- function(path, flag, name) {
   message(sprintf("%s: keeping %d columns, dropping %d",
                   name, length(vars_marked(flag, "keep")), length(dropped)))
 
+  # Drop the schema's metadata so no R attributes are published. A step that
+  # converts a data.table to Arrow stores its class and indexes under the
+  # metadata key "r", and write_dataset() copies a dataset's schema metadata
+  # into every file it writes. ds$schema returns a copy, so clearing the copy's
+  # metadata does not change ds; WithSchema() then applies the clean schema.
+  clean_schema <- ds$schema
+  clean_schema$metadata <- NULL
+  ds <- ds$WithSchema(clean_schema)
+
   # Return a LAZY query over the hive -- not a materialized table -- keeping the
   # variables labelled keep in the manifest, in publication order. Nothing is
   # read until write_dataset() executes it, which is what lets this run at all.
@@ -138,6 +147,36 @@ finalize <- function(path, flag, name) {
   # guard. all_of() also emits columns in the order given, which is what makes
   # the manifest's row order the published column order.
   ds |> select(all_of(vars_marked(flag, "keep")))
+}
+
+# Stops if any Parquet file under path carries R attributes (metadata key "r").
+# finalize() strips them, so a failure here means the strip stopped working.
+# The published emp files once carried ~45 MB of stale data.table indexes in
+# every footer (~15 GB in all), which this check exists to keep from recurring.
+# Reads only each file's footer.
+# path is a directory path to a hive
+# name is the hive label used in the progress and error messages
+check_no_r_attributes <- function(path, name) {
+  # List every Parquet file in the hive
+  files <- list.files(path, pattern = "\\.parquet$", recursive = TRUE,
+                      full.names = TRUE)
+  # Initialize an empty vector
+  flagged <- character(0)
+  # Check each partition for the r metadata in the footer; if r metadata exists
+  # add the file path to the flagged vector
+  for (f in files) {
+    if ("r" %in% names(ParquetFileReader$create(f)$GetSchema()$metadata)) {
+      flagged <- c(flagged, f)
+    }
+  }
+  # Stop if any partitions carry the r metadata
+  if (length(flagged) > 0) {
+    stop(name, ": ", length(flagged), " of ", length(files),
+         " file(s) carry R attributes in their metadata; do not publish ",
+         "until resolved. First: ", flagged[1])
+  }
+  message(sprintf("%s: no R attributes in %d file(s)", name, length(files)))
+  invisible(NULL)
 }
 
 
@@ -155,6 +194,8 @@ write_dataset(emp,
               compression            = "zstd",
               existing_data_behavior = "delete_matching",
               use_dictionary         = FALSE)
+
+check_no_r_attributes("emp_hive", "emp_hive")
 
 rm(emp)
 gc()
@@ -175,6 +216,8 @@ write_dataset(acc,
               existing_data_behavior = "delete_matching",
               use_dictionary         = FALSE)
 
+check_no_r_attributes("acc_hive", "acc_hive")
+
 rm(acc)
 gc()
 
@@ -193,6 +236,8 @@ write_dataset(sep,
               compression            = "zstd",
               existing_data_behavior = "delete_matching",
               use_dictionary         = FALSE)
+
+check_no_r_attributes("sep_hive", "sep_hive")
 
 rm(sep)
 gc()

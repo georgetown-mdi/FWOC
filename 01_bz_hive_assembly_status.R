@@ -103,6 +103,13 @@ for (i in seq_along(qtrs)) {
   arrow_chunk <- arrow_table(chunk, schema = my_schema)
   rm(chunk)
 
+  # arrow_table() copies the data.table's R attributes into the table's
+  # metadata under the key "r": its class, and the indexes data.table builds
+  # automatically for the == and %in% filters above (one integer per row, per
+  # indexed column). Written to Parquet, that is ~45 MB in every file's footer,
+  # and later steps copy it onto every emp partition they rewrite. Drop it.
+  arrow_chunk$metadata$r <- NULL
+
   write_dataset(
     arrow_chunk,
     path                   = "buzz_feed/bz_status_hive_raw/",
