@@ -157,7 +157,7 @@ flush_zips <- function() {
   # flushed. For VA_2024's CSV that line is (wrapped here; one line in the
   # file):
   #
-  #   zip -j -q 'export/csv/agency/VA_2024.zip'
+  #   zip -j -q 'export/csv/agency/VA/VA_2024.zip'
   #             '/dev/shm/fwoc_export_123/VA_2024.csv'
   #     && rm   '/dev/shm/fwoc_export_123/VA_2024.csv'
   #
@@ -180,7 +180,7 @@ flush_zips <- function() {
   #
   # and each line of the file is then run as:
   #
-  #   sh -c "zip -j -q 'export/csv/agency/VA_2024.zip'
+  #   sh -c "zip -j -q 'export/csv/agency/VA/VA_2024.zip'
   #                    '/dev/shm/fwoc_export_123/VA_2024.csv'
   #            && rm   '/dev/shm/fwoc_export_123/VA_2024.csv'"
   #
@@ -401,11 +401,18 @@ years_for <- function(code) sort(cy$year[cy$agency_code == code])
 # --- By year (14 agencies) ---
 message("-- By year --")
 for (code in by_year_codes) {
+  # Each multi-file agency gets its own folder (csv/agency/VA/VA_2024.zip). The
+  # R2 listing behind the Download page returns at most 1,000 entries per
+  # folder, and a flat csv/agency/ holds more than that.
+  csv_code_dir <- file.path(csv_agency, code)
+  dta_code_dir <- file.path(dta_agency, code)
+  dir.create(csv_code_dir, showWarnings = FALSE)
+  dir.create(dta_code_dir, showWarnings = FALSE)
   for (yr in years_for(code)) {
     bn <- paste0(code, "_", yr) # Create a file name
     message(bn)
     chunk <- emp |> filter(agency_code == code, year == yr) |> collect()
-    write_export(chunk, bn, csv_agency, dta_agency)
+    write_export(chunk, bn, csv_code_dir, dta_code_dir)
     rm(chunk)
     gc()
   }
@@ -414,6 +421,11 @@ for (code in by_year_codes) {
 # --- By decade (5 agencies) ---
 message("-- By decade --")
 for (code in by_decade_codes) {
+  # Own folder per agency, as in the by-year tier (csv/agency/NN/NN_1970s.zip).
+  csv_code_dir <- file.path(csv_agency, code)
+  dta_code_dir <- file.path(dta_agency, code)
+  dir.create(csv_code_dir, showWarnings = FALSE)
+  dir.create(dta_code_dir, showWarnings = FALSE)
   # Get a vector of years for the agency
   yrs  <- years_for(code)
   # Create a vector of decades
@@ -425,7 +437,7 @@ for (code in by_decade_codes) {
     chunk <- emp |>
       filter(agency_code == code, year >= dec, year <= dec_end) |>
       collect()
-    if (nrow(chunk) > 0) write_export(chunk, bn, csv_agency, dta_agency)
+    if (nrow(chunk) > 0) write_export(chunk, bn, csv_code_dir, dta_code_dir)
     rm(chunk)
     gc()
   }
@@ -590,12 +602,15 @@ write_csv(lookup, file.path(export_root, "agency_code_lookup.csv"), na = "")
 #   parquet/zip/    each archive removed and rebuilt above
 #
 # Widening the scope to csv/ and stata/ would be harmless -- those four are in
-# `published` too -- but it would guard nothing. list.files() does not recurse
-# by default, so naming csv_dir would NOT reach csv/agency anyway; the two
-# agency directories have to be listed explicitly, as they are here.
+# `published` too -- but it would guard nothing.
+#
+# recursive = TRUE because the by-year and by-decade archives sit one level
+# down, in a folder per agency. It also clears the archives of the earlier flat
+# layout (csv/agency/VA_2024.zip): they are on disk, no run produces them any
+# more, so they are stale.
 
 existing <- list.files(c(csv_agency, dta_agency), pattern = "\\.zip$",
-                       full.names = TRUE)
+                       full.names = TRUE, recursive = TRUE)
 
 stale <- setdiff(existing, published)
 
