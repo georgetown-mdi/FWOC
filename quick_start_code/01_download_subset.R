@@ -1,5 +1,6 @@
 ############################################################
 # 01_download_subset.R
+# Author: Mark Richardson, Maanasa Vatsavayi, and Claude Code
 #
 # Downloads a subset of the Federal Workforce OpenCommons (FWOC) data: one
 # dataset, the agencies you choose, and the range of months you choose. The

@@ -1,5 +1,6 @@
 ############################################################
 # 02_open_subset.R
+# Author: Mark Richardson and Claude Code
 #
 # Opens the Parquet files saved by 01_download_subset.R, shows how to look at
 # them without loading them into memory, and shows how to save a piece as CSV
@@ -42,8 +43,9 @@ SUBSET_DIR <- "fwoc_subset/emp"
 # types), not the rows. `emp` is therefore a pointer to the files on disk and
 # uses almost no memory, however large the data are.
 #
-# unify_schemas = TRUE is needed because some variables exist only in some
-# months. Without it, Arrow keeps only the variables found in the first file.
+# unify_schemas = TRUE makes Arrow check the variables in every file, not only
+# the first. Every file in a release has the same variables, so this matters
+# only if your local copy mixes months downloaded at different times.
 emp <- open_dataset(SUBSET_DIR, unify_schemas = TRUE)
 
 # Number of rows and the variable names. Neither reads the data itself.
