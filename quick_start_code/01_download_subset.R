@@ -28,7 +28,7 @@
 #   agency. For each month you request, the script downloads that month's file,
 #   keeps the rows for your agencies, saves them, and deletes the downloaded
 #   file. Disk space is therefore needed only for your subset plus one month
-#   (an employment month is about 250 MB).
+#   (an employment month is about 220 MB).
 #
 # WARNING: THIS SCRIPT OVERWRITES FILES IT SAVED BEFORE
 #   For each month you request, the script first deletes the file it saved for
@@ -47,9 +47,9 @@
 #   data are updated.
 #
 # SIZE AND TIME
-#   Employment is large: about 3 GB is downloaded per year requested (from
-#   2012 on), whichever agencies you keep. Accessions and separations are
-#   small: about 0.03 GB per year.
+#   Employment is large: about 2 to 3 GB is downloaded per year requested
+#   (from 2015 on), whichever agencies you keep. Accessions and separations
+#   are small: about 0.03 GB per year.
 ############################################################
 
 library(arrow)
@@ -73,8 +73,8 @@ library(jsonlite)
 # OUTPUT_DIR  Folder to save into. It is created if it does not exist.
 
 # Example 1: employment at the Department of Defense (DD) and the Department
-# of Veterans Affairs (VA) in 2024. About 3 GB is downloaded. Setting START to
-# "2010-01" and END to the current month would download about 44 GB.
+# of Veterans Affairs (VA) in 2024. About 2.6 GB is downloaded. Setting START
+# to "2010-01" and END to the current month would download about 34 GB.
 DATASET <- "emp"
 AGENCIES <- c("DD", "VA")
 START <- "2024-01"
