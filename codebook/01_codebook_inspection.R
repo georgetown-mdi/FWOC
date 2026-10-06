@@ -136,18 +136,14 @@ writeInspection(cv, emp, c("nsftp_indicator", "nsftp_indicator_fwoc"), "emp")
 #### agency_fwoc ####
 
 cv <- coverageByYearMonth(data = emp,
-                          var = c("agency_code_fwoc", "agency_fwoc",
-                                  "agency_fwoc_experimental"))
-writeInspection(cv, emp, c("agency_code_fwoc", "agency_fwoc",
-                           "agency_fwoc_experimental"), "emp")
+                          var = c("agency_code_fwoc", "agency_fwoc"))
+writeInspection(cv, emp, c("agency_code_fwoc", "agency_fwoc"), "emp")
 
 #### subagency_fwoc ####
 
 cv <- coverageByYearMonth(data = emp,
-                          var = c("agency_subelement_code_fwoc", "agency_subelement_fwoc",
-                                  "agency_subelement_fwoc_experimental"))
-writeInspection(cv, emp, c("agency_subelement_code_fwoc", "agency_subelement_fwoc",
-                           "agency_subelement_fwoc_experimental"), "emp")
+                          var = c("agency_subelement_code_fwoc", "agency_subelement_fwoc"))
+writeInspection(cv, emp, c("agency_subelement_code_fwoc", "agency_subelement_fwoc"), "emp")
 
 #### department ####
 

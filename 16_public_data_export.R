@@ -110,7 +110,6 @@ reg.finalizer(globalenv(), function(e) {
 # ============================================================
 
 stata_renames <- c(
-  agency_subelem_fwoc_experimental = "agency_subelement_fwoc_experimental",
   ann_adj_basic_pay_num       = "annualized_adjusted_basic_pay_num",
   consol_stat_area_code       = "consolidated_statistical_area_code",
   duty_stn_st_cntry_terr_code = "duty_station_state_country_territory_code",

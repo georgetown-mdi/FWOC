@@ -93,12 +93,10 @@ multi_files <- list(
        vars = c("agency", "agency_code")),
   list(f = "coverage_emp_agency_subelement_code_agency_subelement.csv",
        vars = c("agency_subelement_code", "agency_subelement")),
-  list(f = "coverage_emp_agency_code_fwoc_agency_fwoc_agency_fwoc_experimental.csv",
-       vars = c("agency_code_fwoc", "agency_fwoc", "agency_fwoc_experimental")),
-  list(f = paste0("coverage_emp_agency_subelement_code_fwoc_agency_subelement_fwoc_",
-                  "agency_subelement_fwoc_experimental.csv"),
-       vars = c("agency_subelement_code_fwoc", "agency_subelement_fwoc",
-                "agency_subelement_fwoc_experimental")),
+  list(f = "coverage_emp_agency_code_fwoc_agency_fwoc.csv",
+       vars = c("agency_code_fwoc", "agency_fwoc")),
+  list(f = "coverage_emp_agency_subelement_code_fwoc_agency_subelement_fwoc.csv",
+       vars = c("agency_subelement_code_fwoc", "agency_subelement_fwoc")),
   list(f = "coverage_emp_department_code_department.csv",
        vars = c("department_code", "department")),
   list(f = "coverage_emp_duty_station_country_code_duty_station_country.csv",
@@ -210,10 +208,7 @@ for (item in multi_files) {
 # their coverage (it tracks agency/subagency, which is always present). The
 # build neither derives nor overwrites them -- excused from the guard here, and
 # their existing values restored after getField below.
-skip <- c("opm_label_misleading_agency", "case_agency_experimental",
-          "func_id_agency_experimental", "reorg_id_agency_experimental",
-          "opm_label_misleading_subagency", "case_subagency_experimental",
-          "func_id_subagency_experimental", "reorg_id_subagency_experimental")
+skip <- c("opm_label_misleading_agency", "opm_label_misleading_subagency")
 
 # Ensure the coverage results generated above cover all variables
 missing_vars <- setdiff(cb$Variable, c(names(results), skip))

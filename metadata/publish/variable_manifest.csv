@@ -13,19 +13,19 @@ agency,keep,keep,keep,
 agency_code_fwoc,keep,keep,keep,
 agency_fwoc,keep,keep,keep,
 opm_label_misleading_agency,keep,keep,keep,
-agency_fwoc_experimental,keep,keep,keep,
-case_agency_experimental,keep,keep,keep,
-func_id_agency_experimental,keep,keep,keep,
-reorg_id_agency_experimental,keep,keep,keep,
+agency_fwoc_experimental,drop,drop,drop,"Experimental, not published (decided 2026-10-06). Joined in step 10 from metadata/labels/*_labels_fwoc_experimental.csv and dropped here. The coding behind it is unverified, and it reviews organizational change only where a name changed. The lookup tables stay in the repository for users who want to apply them."
+case_agency_experimental,drop,drop,drop,"Experimental, not published (decided 2026-10-06). Joined in step 10 from metadata/labels/*_labels_fwoc_experimental.csv and dropped here. The coding behind it is unverified, and it reviews organizational change only where a name changed. The lookup tables stay in the repository for users who want to apply them."
+func_id_agency_experimental,drop,drop,drop,"Experimental, not published (decided 2026-10-06). Joined in step 10 from metadata/labels/*_labels_fwoc_experimental.csv and dropped here. The coding behind it is unverified, and it reviews organizational change only where a name changed. The lookup tables stay in the repository for users who want to apply them."
+reorg_id_agency_experimental,drop,drop,drop,"Experimental, not published (decided 2026-10-06). Joined in step 10 from metadata/labels/*_labels_fwoc_experimental.csv and dropped here. The coding behind it is unverified, and it reviews organizational change only where a name changed. The lookup tables stay in the repository for users who want to apply them."
 agency_subelement_code,keep,keep,keep,
 agency_subelement,keep,keep,keep,
 agency_subelement_code_fwoc,keep,keep,keep,
 agency_subelement_fwoc,keep,keep,keep,
 opm_label_misleading_subagency,keep,keep,keep,
-agency_subelement_fwoc_experimental,keep,keep,keep,
-case_subagency_experimental,keep,keep,keep,
-func_id_subagency_experimental,keep,keep,keep,
-reorg_id_subagency_experimental,keep,keep,keep,
+agency_subelement_fwoc_experimental,drop,drop,drop,"Experimental, not published (decided 2026-10-06). Joined in step 10 from metadata/labels/*_labels_fwoc_experimental.csv and dropped here. The coding behind it is unverified, and it reviews organizational change only where a name changed. The lookup tables stay in the repository for users who want to apply them."
+case_subagency_experimental,drop,drop,drop,"Experimental, not published (decided 2026-10-06). Joined in step 10 from metadata/labels/*_labels_fwoc_experimental.csv and dropped here. The coding behind it is unverified, and it reviews organizational change only where a name changed. The lookup tables stay in the repository for users who want to apply them."
+func_id_subagency_experimental,drop,drop,drop,"Experimental, not published (decided 2026-10-06). Joined in step 10 from metadata/labels/*_labels_fwoc_experimental.csv and dropped here. The coding behind it is unverified, and it reviews organizational change only where a name changed. The lookup tables stay in the repository for users who want to apply them."
+reorg_id_subagency_experimental,drop,drop,drop,"Experimental, not published (decided 2026-10-06). Joined in step 10 from metadata/labels/*_labels_fwoc_experimental.csv and dropped here. The coding behind it is unverified, and it reviews organizational change only where a name changed. The lookup tables stay in the repository for users who want to apply them."
 department_code,keep,keep,keep,
 department,keep,keep,keep,
 cfo_act_agency_indicator,keep,keep,keep,
