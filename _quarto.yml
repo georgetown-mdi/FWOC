@@ -1,0 +1,19 @@
+project:
+  type: default
+  # Render only the documents in docs/. README.md and the pipeline .R files
+  # are left alone.
+  render:
+    - docs/*.qmd
+  # Run the documents' R chunks from the repository root. The codebook and the
+  # User Guide read metadata/labels/*.csv, metadata/codebook/*.csv and
+  # metadata/eop/eop_labels_fwoc.csv by root-relative path, so rendering from
+  # inside docs/ would fail. Render with `quarto render docs/<file>.qmd` from
+  # the root.
+  execute-dir: project
+
+# No project-level `format:` on purpose: each document declares its own
+# `format: pdf` header, and a project-level format would override it.
+
+editor:
+    markdown:
+      wrap: 72
