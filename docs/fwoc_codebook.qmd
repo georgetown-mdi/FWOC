@@ -1,0 +1,379 @@
+
+---
+title: "Federal Workforce OpenCommons Codebook"
+subtitle: "Data as of July 2026 (built 2026-10-07)"
+date: 2026-10-06
+date-format: "long"
+format:
+  pdf:
+    toc: true
+    toc-depth: 3
+    colorlinks: true
+    linkcolor: "RoyalBlue"   # internal: TOC, \ref to tables/figures
+    citecolor: "RoyalBlue"   # bibliography
+    urlcolor:  "RoyalBlue"   # external URLs
+    toccolor:  "RoyalBlue"
+execute:
+  echo: FALSE
+editor:
+    markdown:
+      wrap: 72
+---
+
+# How to Read this Codebook
+
+This codebook documents every variable published in the Federal Workforce OpenCommons (FWOC) data. The Field Definitions section provides explanations of each field in the codebook. The Variable Reference section has one entry per variable, with each entry providing the variable name, variable definition, and field values for that variable. The Value Labels section provides lookup tables of code-label pairs for variables with a small set of possible values and references for variables with a large set of possible values. This codebook is derived from a companion CSV file: `fwoc_codebook_table.csv` available on GitHub.
+
+# Field Definitions
+
+## Definition and Type
+
+- **Definition:** The variable definition accompanied by additional details when warranted.
+
+- **Type:** the Arrow/Parquet storage type of the column (`string`, `int8`,
+  `int16`, `int32`, `double`, `date32[day]`). The Arrow R Package provides [documentation on data types](https://arrow.apache.org/docs/r/articles/data_types.html).
+
+## Dataset and Source
+
+- **Employment, Accessions, and Separations:** These flags identify variables present in each dataset. The Hives row in the Variable Reference section lists the datasets that include the variable.
+
+- **BZ Source and FWD Source:** These flags identify variables that are in the BuzzFeed FOIA source data or the [Federal Workforce Data](https://data.opm.gov) source data. The Source row in the Variable Reference section summarizes these flags. If a variable exists in neither BZ nor FWD source, it is labeled FWOC-derived to indicate it is added during the FWOC curation process.
+
+## Coverage
+
+- **Era:** The time span over which a variable has data: BZ (BuzzFeed era, 2004 and earlier), FWD (Federal Workforce Data era, 2005 and later), or ALL (both). Era reflects when a variable has data, not which source it comes from. FWOC harmonizes variables across the two sources — deriving or backfilling values to extend them across both eras — so a variable can be ALL even when a source flag is FALSE (e.g., `date`, `education_level_bracket_fwoc`).
+
+- **Date From / Date To:** The first and last year-month (`YYYY-MM`) in which the
+  variable has any nonmissing value (the first/last month that is not entirely missing). The Date From and Date To values are provided in parentheses in the **Era** row in the Variable Reference. Some variables are structurally missing in certain year-months, either because they are not included in the BZ or FWD source data or because the FWD has internal structural gaps. 
+  
+- **Interior Coverage Gaps:** This field identifies year-months when a variable is structurally missing within its Date From/Date To window. 
+  - `Yes` if there is at least one year-month *inside*
+  [Date From, Date To] where the variable is **entirely absent** (every record
+  missing);
+  - `No` if it is populated in every period of its window.
+
+- **Missing Values:** This field identifies variables that have missing values within their Date From/Date To window. We define missing to be true missingness - a genuine missing value (`is.na() = TRUE`) - not a sentinel value or a redaction placeholder.
+  - `Yes` if any **individual record** is missing when the variable exists (i.e., there is no Interior Coverage Gap);
+  - `No` if every record is nonmissing when the variable exists. 
+  - Note: `NA` counts as missing, but the literal two-character string "NA" does not — "NA" is a real value in these data (a valid agency code and pay-plan code), so string records with value "NA" are not counted as missing.
+
+Interior Coverage Gaps and Missing Values answer different, complementary questions:
+
+| | Granularity | "Yes" means |
+|---|---|---|
+| **Interior Coverage Gaps** | whole periods (year-months) | there is at least one month, inside the variable's Date From-Date To window, where it does not exist at all (i.e., it is not included in the source data for that reporting period) |
+| **Missing Values** | individual records | within the months where the variable *does* exist (i.e., there is not a coverage gap), some records are missing (`NA`) |
+
+
+@tbl-coverage-gaps provides detailed information on when coverage gaps occur. FWOC backfills `duty_station` variables where possible using related fields that do not have a concurrent coverage gap. Therefore, FWOC coverage gaps are fewer than FWD source data coverage gaps. FWOC also populates the `date` variable for the FWD period. See the Variable Reference section below for details.
+
+
+```{r}
+#| label: tbl-coverage-gaps
+#| tbl-cap: "Variables with interior coverage gaps and the year-months they are entirely absent"
+#| message: false
+
+library(readr)
+library(tinytable)
+
+read_csv("metadata/codebook/gap_detail.csv", na = "", show_col_types = FALSE) |>
+  tt(width = c(0.33, 0.06, 0.10, 0.10, 0.41)) |>   # fixed widths so long cells wrap
+  format_tt(escape = TRUE) |>   # variable names contain `_`; escape for LaTeX
+  style_tt(fontsize = 0.8) |>
+  style_tt(j = 1, bold = TRUE)
+```
+
+- **Sentinel Codes:** values that appear in the data but stand for
+  missing / unknown / redacted rather than a real category (e.g. `REDACTED`,
+  `**`, `NAME WITHHELD BY AGENCY`, `INVALID`, `NO DATA REPORTED`).
+
+## Redactions
+
+- **Redacted For:** whether the variable is withheld for employees in
+  sensitive occupations and/or sensitive agencies.
+
+
+## Fields in CSV Only
+
+- **FWD Definition:** Flag indicates the definition was copied from or heavily borrows from [OPM's Download FWD Data Dictionary](https://data.opm.gov/explore-data/data/data-downloads)
+
+- **DS Definition:** Flag indicates the definition was copied from or heavily borrows from [OPM's Download EHRI Data Standards](https://data.opm.gov/data-standards/ehri-data-standards)
+
+
+# FWOC Agency and Subagency Variables
+
+OPM publishes a lookup table of agency and subagency name-code pairs as part of its [EHRI Data Standards Agency/Subelement table](https://data.opm.gov/data-standards/agency-subelement). Agencies are denoted by a two-character code and subagencies by a four-character code whose first two characters are the parent agency's code. The same code can map to different names (i.e., labels) across time, for at least three reasons:
+
+1. The agency or subagency is renamed by law, executive action, or departmental order. The new name may or may not come with a change in the organization's structure or function, and the change may transfer functions to one or more successor organizations, one of which sometimes inherits the code.
+2. OPM re-uses a code for a wholly unrelated agency or subagency after the earlier one is abolished or assigned a new code.
+3. OPM changes the name as part of its own record keeping, with no change to the organization: a corrected spelling, an appended administrative note, or a different form of the name (e.g., CM63 shifts from "Bureau of the Census" to "U.S. Census Bureau" on 2016-03-01).
+
+The reverse also happens: an organization keeps its name but is given a new code. The Census Bureau, for example, is listed under CM37 until 1987-06-30 and under CM63 from 1986-12-01. For seven months the table lists the Bureau under both codes, and it does not say which of the two is used for reporting.
+
+A user who sees a code's name change cannot tell from OPM's table whether it coincides with a change in the agency's structure or function that breaks the agency's time series, or whether it is solely administrative record keeping. In short, a user cannot tell whether the data before and after a name change are comparable.
+
+A further, less common problem is that OPM's label is sometimes materially misleading. For example, code FR is labeled "Federal Reserve System" beginning 2010-12-01. However, the only unit that reports data under code FR is the Consumer Financial Protection Bureau. The Board of Governors does not submit data to OPM. We therefore relabel code FR as "Consumer Financial Protection Bureau" from that date, so that users know which unit reports.
+
+FWOC addresses these problems with the FWOC codes and names: `agency_code_fwoc` and `agency_fwoc`, and `agency_subelement_code_fwoc` and `agency_subelement_fwoc`. They are OPM's codes and names with the following changes:
+
+1. **The military departments are placed under the Department of Defense.** OPM codes the Army (AR), Navy (NV) and Air Force (AF) as separate agencies. FWOC gives their records the agency code DD and the subagency codes DDAR, DDNV and DDAF, which carry OPM's names for the three departments. The military departments therefore appear as subagencies of DD, and DD totals include them.
+2. **Misleading names are replaced with the name of the unit that reports.** For example, code FR is named "Consumer Financial Protection Bureau" in place of OPM's "Federal Reserve System". The variables `opm_label_misleading_agency` and `opm_label_misleading_subagency` take the value 1 on the records where a name was replaced for this reason. There are six such codes: AM (the U.S. Agency for International Development reports under a code OPM names for the U.S. International Development Cooperation Agency, 1999-10 to 2011-03), FR (the Consumer Financial Protection Bureau, 2010-12 onward), JL (OPM displays "Judicial Branch"; the U.S. Tax Court reports, 2013-08 onward), GW and GW00 (OPM displays "International Boundary and Water Commission: United States and Mexico"; the U.S. Section reports, 1985-08 to 2017-12), and ST03 (the same Commission under its earlier Department of State code, 1972-06 to 1986-03).
+3. **Each department's Office of the Secretary has one name.** For example, "Office of the Secretary of Agriculture" in place of OPM's "Office of the Secretary", "Immediate Office of the Secretary of Agriculture" and other forms. For the Department of Health, Education, and Welfare the name changes on 1980-05-04, the day the department became Health and Human Services.
+4. **Name changes that are purely administrative are removed.** Where OPM changed the name it displays although the agency's name did not formally change, and the evidence indicates the agency is comparable before and after, FWOC uses one name throughout. For example, CM63 is "U.S. Census Bureau" for its whole period.
+5. **Where a name changed and OPM's new name departs from the name in statute, the statutory name is used.** FWOC reviewed names only where they changed, so this is not a claim that every FWOC name matches statute. For example, in August 2016 OPM changed the name it displays for code HB from "Committee for Purchase From People Who Are Blind or Severely Disabled" to "Committee for Purchase From People Who Are Blind and Severely Disabled". The name in statute is "Blind or Severely Disabled" (41 U.S.C. 8502), and FWOC keeps it.
+6. **Typographical errors and one placeholder are corrected.** For example, IN23 is "Minerals Management Service" in place of OPM's "Mineral Management Service". The replaced placeholder is "Translation Unknown". Specifically, OPM displays "TRANSLATION UNKNOWN" for code DD02 for the month of December 1988, between "Organization of the Joint Chiefs of Staff" and "Joint Staff". The same unit reports under the code throughout, and FWOC names it "Organization of the Joint Chiefs of Staff" for that month.
+
+All other codes and names are OPM's, and OPM's own names remain available in `agency` and `agency_subelement`. These are the name variables we recommend. The evidence and rules behind item 4 are explained in the next subsection, and every name that differs from OPM's is listed, with its reason, in the two tables at the end of this section.
+
+Records whose OPM code is absent from OPM's lookup table (agency codes `00` and `04`; subagency codes `00AD` and `04GS`) have a missing FWOC code and name, and their branch and Executive Office indicators (`exec_branch`, `leg_branch`, `jud_branch`, `a1_court`, `eop`, `core_eop`) are also missing, since the record cannot be classified. Four employment records carry these codes.
+
+FWOC has also produced a set of experimental names. They are not part of the published data. They are an effort to use a corpus of text, including public laws, reorganization plans, executive orders, departmental orders, and editions of the *U.S. Government Manual*, to determine when a name change coincides with a change in structure or function that breaks comparability. Where the FWOC names replace OPM's names only to avoid a misleading label or to give a continuous name when there is strong evidence that the agency is comparable across the change, the experimental names make a judgment about which organizational and functional changes make an agency no longer comparable.
+
+The experimental names are not validated, and they have a fundamental asymmetry. The review covered only cases where more than one name maps to the same code. A review of organizational and functional stability that is triggered by a name change is incomplete: it does not capture structural changes that do not coincide with a name change. For example, the Social Security Administration was part of the Department of Health and Human Services until March 31, 1995. Is HHS including SSA comparable to HHS without SSA? HHS had 122,663 employees as of 1995-03-31 but only 57,906 at the next reporting date, 1995-06-30. A name variable that claimed to identify structural breaks but did not review all agencies would be misleading. Identifying these structural breaks is ongoing work at FWOC.
+
+The experimental lookup tables are kept in the FWOC GitHub repository for interested users to review. The variables are described, with their limits, in a separate document, *FWOC Experimental Agency and Subagency Labels*.
+
+```{r}
+#| label: fwoc-scope
+#| message: false
+
+library(readr)
+library(dplyr)
+
+# The count quoted in the text below, computed from the installed input table
+# so that it cannot drift from the data.
+display_changes <- read_csv("metadata/labels/fwoc_ship/nominal_events.csv", na = "",
+                            col_types = cols(.default = "c"), show_col_types = FALSE)
+scope <- list(display_changes = nrow(display_changes))
+```
+
+## Evidence and rules for removing administrative name changes
+
+This subsection explains item 4 in the list above: how FWOC decides that a change in the name OPM displays is purely administrative.
+
+OPM sometimes changes the name it assigns an agency (or subagency) code although neither the organizational unit nor its name changed. It adds or drops a word, switches between a full and a short form of the name, or alters punctuation. Where we have strong evidence that is what happened, FWOC applies OPM's latest form of the name to the code's whole period, so that a purely administrative name change does not suggest a break in a time series over which the agency is comparable.
+
+**The rule.** A name change is removed only when both of the following hold.
+
+1. **One name.** An official government source listed below shows that the agency's name was the same on both sides of the change.
+2. **Employee composition on either side of the name change corroborates the assumption of comparability.** The employment data show that the employees under the code are the same people before and after the change. Name changes of several subagencies within an executive department on the same date are judged together: where the records show staff being moved between that department's codes within two quarters on either side of the date, none of those changes is removed. For example, on 1994-06-01 OPM added "Immediate Office of the" to the names of six Assistant Secretary codes at the Department of Veterans Affairs. The Assistant Secretaries' titles did not change, so the first condition is met. But in the two quarters on either side of that date the records show staff being moved between the department's headquarters codes: 131 employees out of VABA and 409 out of VADD into a Deputy Assistant Secretary's code in December 1993, and 29 into VAHA from the Veterans Health Administration in June 1994. The name changes coincide with a redistribution of staff between the department's codes, not a change of display alone, so none of the six is removed, including the four whose own staff did not change.
+
+We recoded `r scope$display_changes` name changes under this rule. Where an agency moved from one code to another and OPM displayed its name differently under the two codes, FWOC likewise uses one name under both.
+
+**The evidence.** Name changes in OPM's lookup table were compared against a fixed corpus of primary government sources stored locally, nearly all of it machine-readable text downloaded from the [U.S. Government Publishing Office's Bulk Data Repository](https://www.govinfo.gov/bulkdata/):
+
+- the [*United States Statutes at Large*](https://www.govinfo.gov/bulkdata/STATUTE), volumes 65 through 137 (1951 to 2023), in GPO's XML;
+- the [*Federal Register*](https://www.govinfo.gov/bulkdata/FR), every daily issue from January 2000 through May 2026 in GPO's XML, and earlier issues retrieved from govinfo.gov as scanned PDFs when a question required them, their text extracted and searched issue by issue, with every search logged;
+- the [*U.S. Government Manual*](https://www.govinfo.gov/app/collection/govman), every edition from 1972 through 2025, as GPO's PDFs through 2009 and XML from 2011;
+- the Federal Register's [index of executive orders](https://www.federalregister.gov/presidential-documents/executive-orders), from EO 7532 of January 8, 1937 onward, with the text of orders from federalregister.gov. Government publication of executive orders begins with the *Federal Register* itself, whose first order is EO 7316 of March 13, 1936, and federalregister.gov's index begins with EO 7532. One order before those dates was needed, EO 6917 of December 11, 1934, which created Federal Prison Industries, Inc.; its text was taken from the [American Presidency Project](https://www.presidency.ucsb.edu/documents/executive-order-6917-creating-body-corporate-be-known-federal-prison-industries-inc) at the University of California, Santa Barbara, after a `.gov` source (bop.gov) had named and dated the order;
+- departmental orders and directives published on agencies' own `.gov` sites, archived as retrieved;
+- OPM's own [agency and subelement table](https://data.opm.gov/data-standards/agency-subelement), in the May and September 2026 downloads.
+
+Machine-readable text matters for this work: a passage can be searched exactly and quoted verbatim, a citation can be checked against the file it names, and a search that finds nothing can be stated together with what was searched. The weakest part of the corpus is the *Federal Register* before 1994, where the text is optical character recognition of scanned pages; searches there were run with alternative spellings and a control term known to appear, the phrase "Federal Register" in each page's running header, so that an issue whose text had not been read could be told apart from one in which the name was absent.
+
+Candidate changes were researched against this corpus by Claude agents (Fable 5.1 and Opus 5.5). The project author then decided each candidate individually on the evidence assembled. The changes admitted on that evidence were then checked against the employment records: the headcount under the code on each side of the change and, for 1973 through 2004, where an employee identifier exists (`pseudo_id`), whether the same employees were under the code before and after, and whether staff moved between codes. Name changes that coincided with evidence of staff reorganization were not removed; those codes keep OPM's names. The author reviewed the evidence the agents assembled for each candidate and the employment records, but did not independently read every cited statute, order and *Manual* entry, so the name evidence rests on the agents' reading of the corpus. For the replaced names, the `opm_label_note` column of the lookup files (`metadata/labels/agency_labels_fwoc.csv` and `metadata/labels/subagency_labels_fwoc.csv`) cites the source; the documentary evidence for the removed display changes is held in the project's working files and is not published. Human verification of agents' reading of the corpus is ongoing.
+
+**What the rule leaves alone.** A rename of an agency by law, executive action, or departmental order is left as OPM displays it. So is any name change that could not be shown to be purely administrative based on the evidence above. A series grouped by `agency_fwoc` or `agency_subelement_fwoc` therefore still breaks at such a change, as it does in OPM's own data, and the records before and after it may or may not describe the same agency. The recodes under item 4 above are designed to eliminate name changes only where there is strong evidence that the organization is comparable on either side of the name change. Identifying structural breaks in agencies' time series, whether or not they coincide with a name change, is an area of ongoing development at FWOC.
+
+**Dates are OPM's.** Each row of the FWOC lookup files begins and ends where OPM's table changes the name, even where a document shows that a legal change took effect earlier or later. The one exception is the 1980-05-04 boundary for the Office of the Secretary of Health and Human Services. Aligning name changes with the date of legal changes is a planned improvement for the FWOC names.
+
+## Breaks in agency and subagency series
+
+The data include many breaks in agency and subagency series. Some are due to well-known legal changes in form, for example the division of the Department of Health, Education, and Welfare into the Departments of Education and Health and Human Services in 1980, or the creation of the Department of Homeland Security in 2003. Others are less well known. Two examples:
+
+- **Military medical facilities moved to the Defense Health Agency in 2022.** Under 10 U.S.C. 1073c, added by the FY2017 National Defense Authorization Act (Public Law 114-328, section 702), the Defense Health Agency took over the administration of the military medical treatment facilities. The civilian staff of those facilities were moved from the Army, Navy and Air Force to the Agency between July and September 2022: about 45,000 employees, including 27,000 from the U.S. Army Medical Command (ARMC) alone. The code "Military Treatment Facilities under DHA" (DD83) rose from 7,500 to 45,600 and the three military departments' series fell by as much, while the Department of Defense total did not change.
+- **The Surface Transportation Board left the Department of Transportation.** The Surface Transportation Board Reauthorization Act of 2015 (Public Law 114-110) made the Board an independent agency in December 2015. In OPM's data its roughly 120 employees stayed under a Department of Transportation code (TD15) until July 2019 and appear under the Board's own code (TW00) from August 2019, three and a half years after the law took effect. Both the move and the lag are typical.
+
+These organizational changes are often not visible in the names. A code can keep the same name while the reporting unit under it changes, and a code's name can change while the reporting unit stays the same. The FWOC names recode OPM's labels in the documented cases described above, but a stable name is not evidence of a stable underlying organization.
+
+Until the ongoing FWOC work to identify these structural breaks is released, researchers analyzing an agency or subagency over time should:
+
+- Inspect the agency and subagency time series for abrupt changes in level before interpreting a trend.
+- Where an abrupt change appears, look for documentary evidence of a formal reorganization and look at the other codes of the same department in the same period for evidence of internal reorganizations.
+
+The same note appears in the Data Quality Notes of the User Guide.
+
+## How FWOC names differ from OPM's display
+
+The tables below list every row of the two FWOC lookup files whose name differs from a name OPM displayed for the code during the row's period. Where OPM displayed more than one differing name in the period, the names are separated by `|`. The dates are those of the FWOC row, which can be longer than the period in which OPM's name differed. An end date of 2026-09-05 is the date OPM's lookup table was downloaded. The military departments (change 1) do not appear, because their names are OPM's own. The Reason column refers to the other changes in the list at the start of this section:
+
+- **Label shows the reporting unit:** change 2.
+- **Office of the Secretary, standardized:** change 3.
+- **OPM display change, same unit:** change 4.
+- **Statutory name kept:** change 5.
+- **OPM typo corrected** and **OPM placeholder replaced:** change 6.
+
+The two FWOC lookup files, `metadata/labels/agency_labels_fwoc.csv` and `subagency_labels_fwoc.csv`, carry a column that is not joined to the data: `opm_label_note`, which states what OPM displays and why the FWOC name differs, for each replaced name.
+
+```{r}
+#| label: fwoc-differences-setup
+#| message: false
+
+library(readr)
+library(dplyr)
+library(tinytable)
+
+# Written by setup/build_fwoc_ship_labels.R alongside the FWOC lookup files,
+# so the table and the files cannot drift apart.
+fwoc_diffs <- read_csv("metadata/codebook/opm_fwoc_differences.csv", na = "",
+                       col_types = cols(.default = "c"))
+
+# One table per level, breaking across pages with the header repeated. The
+# caption is tinytable's own rather than Quarto's tbl-cap, because Quarto puts
+# a captioned chunk table in a float, which a multipage table cannot occupy.
+fwoc_diff_table <- function(lv, caption) {
+  fwoc_diffs |>
+    filter(level == lv) |>
+    transmute(Code = code, From = date_from, To = date_to,
+              `FWOC name` = fwoc_label,
+              `OPM name(s) in the period` = opm_labels_in_span,
+              Reason = reason) |>
+    tt(caption = caption, width = c(0.06, 0.10, 0.10, 0.30, 0.30, 0.14)) |>
+    theme_latex(multipage = TRUE, rowhead = 1) |>
+    format_tt(escape = TRUE) |>
+    style_tt(fontsize = 0.7, align = "l")   # ragged right: justified uppercase names read badly
+}
+```
+
+```{r}
+#| label: fwoc-differences-agency
+fwoc_diff_table("agency", "FWOC agency names that differ from OPM's display")
+```
+
+```{r}
+#| label: fwoc-differences-subagency
+fwoc_diff_table("subagency", "FWOC subagency names that differ from OPM's display")
+```
+
+## Experimental lookup tables (not in the published data)
+
+Two further lookup tables, `metadata/labels/agency_labels_fwoc_experimental.csv` and `subagency_labels_fwoc_experimental.csv`, come from a fuller, AI-coded classification of OPM's name changes. They are under construction, their results are not reliable, and they are not part of the published data. They are kept in the FWOC repository for transparency and are described in a separate document, *FWOC Experimental Agency and Subagency Labels*.
+
+# Variable Reference
+
+```{r}
+#| label: variable-reference
+#| output: asis
+#| message: false
+
+library(readr)
+
+cb <- read_csv("metadata/codebook/fwoc_codebook_table.csv", na = "",
+               col_types = cols(.default = "c"))
+
+# TRUE when a cell holds a real value (empty -> NA via na = ""); FALSE for an
+# absent column (length 0), so optional columns can be dropped without erroring.
+xflag <- function(v) length(v) == 1L && !is.na(v) && nzchar(v)
+
+# collapse a set of x-flag columns into a comma-separated label list
+emit_list <- function(vals, labs) {
+  keep <- vapply(vals, xflag, logical(1))
+  paste(labs[keep], collapse = ", ")
+}
+
+for (i in seq_len(nrow(cb))) {
+  r <- as.list(cb[i, ])
+
+  hives <- emit_list(list(r$Employment, r$Accessions, r$Separations),
+                     c("Employment", "Accessions", "Separations"))
+  src   <- emit_list(list(r$`BZ Source`, r$`FWD Source`),
+                     c("BuzzFeed FOIA (pre-2005)", "data.opm.gov / FWD (2005+)"))
+  if (!nzchar(src)) src <- "FWOC-derived"
+  span  <- if (xflag(r$`Date From`)) sprintf(" (%s to %s)", r$`Date From`, r$`Date To`) else ""
+
+  cat(sprintf("### `%s`\n\n", r$Variable))
+  if (xflag(r$Definition)) cat(r$Definition, "\n\n")
+
+  cat(sprintf("- **Type:** `%s`\n", r$Type))
+  cat(sprintf("- **Hives:** %s\n", if (nzchar(hives)) hives else "--"))
+  cat(sprintf("- **Source:** %s\n", src))
+  cat(sprintf("- **Era:** %s%s\n", r$Era, span))
+  cat(sprintf("- **Interior Coverage Gaps:** %s\n", r$`Interior Coverage Gaps`))
+  cat(sprintf("- **Missing Values:** %s\n", r$`Missing Values`))
+  if (xflag(r$`Sentinel Codes`))
+    cat(sprintf("- **Sentinel Codes:** `%s`\n", r$`Sentinel Codes`))
+  redact <- emit_list(
+    list(r$`Redacted - Sensitive Occupations`, r$`Redacted - Sensitive Agencies`),
+    c("sensitive occupations", "sensitive agencies"))
+  if (nzchar(redact)) cat(sprintf("- **Redacted For:** %s\n", redact))
+  if (xflag(r$Notes)) cat(sprintf("- **Notes:** %s\n", r$Notes))
+  cat("\n")
+}
+```
+
+# Code-Label Pairs
+
+Many variables are categorical code-label pairs. OPM's lookup tables are available in `metadata/code_tables` and we derive CSV files to label the codes in the FWOC data from these OPM tables. The tables we use are in `metadata/labels/`. For smaller lookup tables, we provide the code-label pairs and valid date-ranges here for easy reference. Large lookup tables are referenced by file rather than reproduced.
+
+## Small Lookup Tables
+
+```{r}
+#| label: labels-inline
+#| output: asis
+#| message: false
+
+library(readr)
+
+# First two columns -> Code/Label; date columns -> From/To; bracket -> Bracket.
+nice <- function(df) {
+  nm <- names(df)
+  if (length(nm) >= 2) nm[1:2] <- c("Code", "Label")
+  nm[nm == "date_from"] <- "From"
+  nm[nm == "date_to"]   <- "To"
+  nm[nm == "education_level_bracket"] <- "Bracket"
+  setNames(df, nm)
+}
+
+inline <- list(
+  c("acc_labels.csv",        "Accession category"),
+  c("sep_labels.csv",        "Separation category"),
+  c("super_stat_labels.csv", "Supervisory status"),
+  c("work_sched_labels.csv", "Work schedule"),
+  c("occ_cat_labels.csv",    "Occupational category"),
+  c("appt_type_labels.csv",  "Appointment type"),
+  c("ed_labels.csv",         "Education level"),
+  c("ed_bracket_labels.csv", "Education level bracket")
+)
+
+for (it in inline) {
+  df <- read_csv(file.path("metadata/labels", it[1]),
+                 na = "", show_col_types = FALSE) |> nice()
+  cat("### ", it[2], "\n\n", sep = "")
+  cat(knitr::kable(df, format = "pipe"), sep = "\n")
+  cat("\n\n")
+}
+```
+
+## Large Lookup Tables (Referenced)
+
+These lookup tables are too large to print. Please consult the CSV for the full mapping.
+
+```{r}
+#| label: labels-pointer
+#| output: asis
+#| message: false
+
+ptr <- list(
+  c("pay_plan_labels.csv", "Pay plan",            "pay-plan codes; time-varying (join on code + date range)"),
+  c("occ_labels.csv",      "Occupational series", "occupational-series codes; time-varying"),
+  c("poi_labels.csv",      "Personnel office identifier (POI)",
+    "wide lookup: POI code to office name, city, and state")
+)
+for (p in ptr) {
+  n <- nrow(read_csv(file.path("metadata/labels", p[1]), na = "", show_col_types = FALSE))
+  cat(sprintf("- **%s** -- `metadata/labels/%s` (%d rows): %s.\n", p[2], p[1], n, p[3]))
+}
+```
+
+## Agency and Subagency Labels
+
+Agency and subagency code-label mappings are time-varying and extensive, so they
+are not reproduced here. The underlying files are `metadata/labels/agency_labels.csv` and
+`subagency_labels.csv` (OPM's names), `agency_labels_fwoc.csv` and
+`subagency_labels_fwoc.csv` (the FWOC names), and
+`agency_labels_fwoc_experimental.csv` and
+`subagency_labels_fwoc_experimental.csv` (the experimental names).
+
+# AI Disclosure
+
+The FWOC is built on the foundation laid by a prior curated dataset based on OPM's FedScope data, which was wholly human created: the project author wrote its pipeline, codebook, user guide and quick start guide with assistance from Dr. Benjamin Reese, and the current versions revise and extend that work. Anthropic's Claude models are used to develop and maintain the FWOC. The AI assisted in writing and proofing the code of the pipeline that builds the curated data, in researching the agency and subagency names described in the FWOC Agency and Subagency Variables section, and in drafting and proofing the user documents, including this codebook. The project author defines each task, decides every question of judgment, and reviews the results, though not every source document the AI read; that verification is ongoing. Every line of code was reviewed by the project author before it was committed.
