@@ -131,7 +131,7 @@ FWOC has also produced a set of experimental names. They are not part of the pub
 
 The experimental names are not validated, and they have a fundamental asymmetry. The review covered only cases where more than one name maps to the same code. A review of organizational and functional stability that is triggered by a name change is incomplete: it does not capture structural changes that do not coincide with a name change. For example, the Social Security Administration was part of the Department of Health and Human Services until March 31, 1995. Is HHS including SSA comparable to HHS without SSA? HHS had 122,663 employees as of 1995-03-31 but only 57,906 at the next reporting date, 1995-06-30. A name variable that claimed to identify structural breaks but did not review all agencies would be misleading. Identifying these structural breaks is ongoing work at FWOC.
 
-The experimental lookup tables are kept in the FWOC GitHub repository for interested users to review. The variables are described, with their limits, in a separate document, *FWOC Experimental Agency and Subagency Labels*.
+The experimental lookup tables are kept in the FWOC GitHub repository for interested users to review. The variables are described, with their limits, in a separate document, *FWOC Experimental Agency and Subagency Labels*, in the `docs/` folder of the repository.
 
 ```{r}
 #| label: fwoc-scope
@@ -247,7 +247,7 @@ fwoc_diff_table("subagency", "FWOC subagency names that differ from OPM's displa
 
 ## Experimental lookup tables (not in the published data)
 
-Two further lookup tables, `metadata/labels/agency_labels_fwoc_experimental.csv` and `subagency_labels_fwoc_experimental.csv`, come from a fuller, AI-coded classification of OPM's name changes. They are under construction, their results are not reliable, and they are not part of the published data. They are kept in the FWOC repository for transparency and are described in a separate document, *FWOC Experimental Agency and Subagency Labels*.
+Two further lookup tables, `metadata/labels/agency_labels_fwoc_experimental.csv` and `subagency_labels_fwoc_experimental.csv`, come from a fuller, AI-coded classification of OPM's name changes. They are under construction, their results are not reliable, and they are not part of the published data. They are kept in the FWOC repository for transparency and are described in a separate document, *FWOC Experimental Agency and Subagency Labels*, in the `docs/` folder of the repository.
 
 # Variable Reference
 
