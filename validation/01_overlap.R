@@ -22,7 +22,7 @@ library(arrow)
 library(dplyr)
 library(stringr)
 source("utils/validation_functions.R")
-source("utils/derive_functions.R")     # add_los_ord(), shared with 09_fwd_compatibility.R
+source("utils/derive_functions.R")     # add_los_ord(), shared with 08_fwd_compatibility.R
 
 out_dir  <- "validation_output"
 base_dir <- "metadata/validation/baselines"

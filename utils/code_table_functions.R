@@ -87,8 +87,8 @@ read_code_table <- function(file_path, download_date) {
 # --------------------------------------------------------------------------
 # From 2026-09 OPM's Duty Stations page downloads only as .xlsx, split into a "US"
 # sheet and an "Other" (foreign) sheet, with the state column headed
-# "State/Territory". Everything downstream -- 08_bz_duty_station_state.R,
-# 13_duty_station_backfill.R, and the archived priors the gate diffs against --
+# "State/Territory". Everything downstream -- 07_bz_duty_station_state.R,
+# 12_duty_station_backfill.R, and the archived priors the gate diffs against --
 # reads the one-sheet CSV shape OPM served before, so the workbook is stacked back
 # into that shape here and setup/build_labels.R writes it out as
 # DutyStations_<date>.csv beside the workbook. The reshape is a pure function so

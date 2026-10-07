@@ -10,11 +10,11 @@
 # Coverage: cpi_u starts in 1913 and unrate_us in 1948, so both span the whole
 #          FWOC range. unrate_state starts in 1976, so 1973-1975 rows carry NA
 #          there by construction, not by error. Rows whose
-#          duty_station_state_code is not a FIPS (REDACTED, "**", NA -- see 13)
+#          duty_station_state_code is not a FIPS (REDACTED, "**", NA -- see 12)
 #          match no state and carry NA unrate_state, also by construction.
 #
-# ORDER:   this script MUST run after 13. The state-unemployment join keys on
-#          duty_station_state_code, and 13 is what populates that column for
+# ORDER:   this script MUST run after 12. The state-unemployment join keys on
+#          duty_station_state_code, and 12 is what populates that column for
 #          2015+, where OPM's current file version omits it entirely. Measured
 #          before 13 runs: 2015-03 and 2024-09 come back 100% NA on
 #          unrate_state. The failure is silent -- the join simply matches

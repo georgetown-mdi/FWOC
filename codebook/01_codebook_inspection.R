@@ -193,7 +193,7 @@ writeInspection(cv, emp, "duty_station_state_country_territory_code", "emp")
 
 #### duty_station_state_territory ####
 
-# Derived in 13_duty_station_backfill.R from OPM duty-station data; coverage is
+# Derived in 12_duty_station_backfill.R from OPM duty-station data; coverage is
 # OPM-controlled, so derive it here rather than hardcoding in the build.
 cv <- coverageByYearMonth(data = emp,
                           var = c("duty_station_state_territory",
@@ -280,7 +280,7 @@ cv <- coverageByYearMonth(data = emp,
 writeInspection(cv, emp, c("occupational_category_code", "occupational_category"), "emp")
 
 #### occupational_category_fwoc ####
-# FWOC-derived: uniform per-year series[+pay_plan+grade] PATCO rule (12_harmonize_labels.R)
+# FWOC-derived: uniform per-year series[+pay_plan+grade] PATCO rule (11_harmonize_labels.R)
 # that also fills the 2005-2009 FWD gap. No source lookup exists, so it is absent from
 # validation/02_labels.R's pairs -- coverage here is the only inspection it gets.
 
@@ -396,7 +396,7 @@ writeInspection(cv, acc, "appointment_not_to_exceed_date", "acc", top_n = 200)
 #### pathways_group ####
 
 # Accessions only. OPM ships it in the accession and separation files from
-# 2015-01, but never in the employment file; 15_finalize_hive.R keeps it on acc
+# 2015-01, but never in the employment file; 14_finalize_hive.R keeps it on acc
 # and drops it from sep, where no row is populated (see the manifest note).
 cv <- coverageByYearMonth(data = acc, var = "pathways_group")
 writeInspection(cv, acc, "pathways_group", "acc")

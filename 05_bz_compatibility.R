@@ -28,7 +28,7 @@ sts <- sts_org |>
 
 # BZ source-data fix: zero-pad single-digit education_code ("1"/"2") to
 # two-digit form ("01"/"02"). Affects ~100 rows in 1974-1977 BZ data;
-# without the fix these rows would join as invalid in script 12. The valid
+# without the fix these rows would join as invalid in script 11. The valid
 # OPM codes are zero-padded; we assume the leading-zero is missing in error;
 # Adds leading 0 to 101 observations from 1974-03 to 1977-03
 # Match values that are length 1 and an integer.

@@ -1,6 +1,6 @@
 # Author: Mark Richardson and Claude Code
 # Purpose: Download and format the BLS macro series — CPI-U, national and state
-#          unemployment — into metadata/bls/formatted/, consumed by 14_bls_macro.R.
+#          unemployment — into metadata/bls/formatted/, consumed by 13_bls_macro.R.
 
 library(httr2)
 library(dplyr)

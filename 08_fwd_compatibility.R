@@ -29,7 +29,7 @@ emp <- add_los_ord(emp)
 
 # Recode OPM indicators to 1/0 in place (cfo_act source is "CFO ACT AGENCY"/"OTHER AGENCY", not Y/N) (scholars want numeric).
 # Base name = OPM-pure value; the gap-fill we derive lives in
-# nsftp_indicator_fwoc (created in 12_harmonize_labels.R).
+# nsftp_indicator_fwoc (created in 11_harmonize_labels.R).
 # Note: all three indicators are missing in fwd data for 2005 through 2009
 # (verified 2026-07-27; OPM does backfill variables retroactively, so re-check).
 

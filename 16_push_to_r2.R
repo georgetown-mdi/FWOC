@@ -1,19 +1,19 @@
 # Author: Mark Richardson and Claude Code
 # Purpose: Push the public data export (the format-based tree written by
-#          16_public_data_export.R) to the Cloudflare R2 bucket that serves the
-#          published FWOC data. Internal ops step, run by hand after 16 -- the
+#          15_public_data_export.R) to the Cloudflare R2 bucket that serves the
+#          published FWOC data. Internal ops step, run by hand after 15 -- the
 #          R2 counterpart of aggregate/push_to_gcs.R.
 #
 #   Publish flow:
-#     16_public_data_export.R  (writes the tree under <local_root>)
+#     15_public_data_export.R  (writes the tree under <local_root>)
 #       -> this script  -> R2 bucket `fwoc`  (public downloads + S3 streaming).
 #
 #   To execute this file, run one of the following commands in a terminal
 #   from the repo root:
-#     FWOC_PUBLISH=1 Rscript 17_push_to_r2.R           # upload new/changed
-#     Rscript 17_push_to_r2.R --dry-run                # preview, no changes
-#     FWOC_PUBLISH=1 Rscript 17_push_to_r2.R --mirror  # also DELETES remote
-#     Rscript 17_push_to_r2.R --dry-run --mirror       # preview a mirror
+#     FWOC_PUBLISH=1 Rscript 16_push_to_r2.R           # upload new/changed
+#     Rscript 16_push_to_r2.R --dry-run                # preview, no changes
+#     FWOC_PUBLISH=1 Rscript 16_push_to_r2.R --mirror  # also DELETES remote
+#     Rscript 16_push_to_r2.R --dry-run --mirror       # preview a mirror
 #
 #   FWOC_PUBLISH=1 is required for any real upload -- it keeps an unattended
 #   build from publishing as a side effect. --dry-run does not need it.
@@ -26,7 +26,7 @@
 #   up your own cloud storage and change `remote` below.
 
 # --- config ---------------------------------------------------------------
-# Local source = the export tree from 16_public_data_export.R -- must match its
+# Local source = the export tree from 15_public_data_export.R -- must match its
 # export_root, or this silently publishes a stale tree.
 local_root <- "export"
 remote <- "fwoc:fwoc"   # rclone remote `fwoc` -> R2 bucket `fwoc`
@@ -65,9 +65,9 @@ if (length(unknown_flags)) {
 # exempt: it changes nothing.
 if (!dry_run && !identical(Sys.getenv("FWOC_PUBLISH"), "1")) {
   stop("Refusing to publish: FWOC_PUBLISH is not set to 1.\n",
-       "  Re-run as:  FWOC_PUBLISH=1 Rscript 17_push_to_r2.R",
+       "  Re-run as:  FWOC_PUBLISH=1 Rscript 16_push_to_r2.R",
        if (mirror) " --mirror" else "",
-       "\n  Or preview with:  Rscript 17_push_to_r2.R --dry-run")
+       "\n  Or preview with:  Rscript 16_push_to_r2.R --dry-run")
 }
 
 if (!nzchar(Sys.which("rclone"))) {
@@ -77,7 +77,7 @@ if (!nzchar(Sys.which("rclone"))) {
 
 if (!dir.exists(local_root)) {
   stop("Local source not found: ", local_root,
-       "\nRun 16_public_data_export.R first.")
+       "\nRun 15_public_data_export.R first.")
 }
 
 # Refuse to sync an empty tree: with --mirror it would wipe the bucket.
@@ -100,7 +100,7 @@ expected <- c("parquet", "csv", "stata")
 if (length(setdiff(expected, subtrees)) > 0) {
   stop("Export tree is missing: ",
        paste(setdiff(expected, subtrees), collapse = ", "),
-       "\n  Re-run 16_public_data_export.R.")
+       "\n  Re-run 15_public_data_export.R.")
 }
 for (extra in setdiff(subtrees, expected)) {
   message("  note: publishing unlisted sub-tree ", extra, "/")
@@ -117,13 +117,13 @@ sub_n <- vapply(subtrees,
 if (any(sub_n == 0)) {
   stop("Empty sub-tree(s): ",
        paste(names(sub_n)[sub_n == 0], collapse = ", "),
-       "\n  Re-run 16_public_data_export.R.")
+       "\n  Re-run 15_public_data_export.R.")
 }
 
 # --- shared rclone flags --------------------------------------------------
 # --checksum: compare by size + MD5 rather than size + mtime, so a rewritten
 #   file with an unchanged size is still detected. The export archives are not
-#   byte-reproducible -- they differ on every run of 16 -- so they re-upload
+#   byte-reproducible -- they differ on every run of 15 -- so they re-upload
 #   whether or not their contents changed.
 # --fast-list: fewer S3 LIST calls (R2 bills per class-A/B operation).
 # --transfers 8: how many files upload concurrently (rclone's default is 4).

@@ -212,10 +212,10 @@ buildInventory <- function(data, code_col, label_col = NULL, var_name = NULL,
   # Date convention must match the dataset's label-join convention:
   #   * `first_of_month = FALSE` (default, for emp): uses `date_col`
   #     directly, which in emp_hive is end-of-period (quarter end for BZ,
-  #     last-of-month for FWD). Matches the script 10/12 emp label joins.
+  #     last-of-month for FWD). Matches the script 09/11 emp label joins.
   #   * `first_of_month = TRUE` (for acc/sep): derives
   #     make_date(year, month, 1L), matching the join_date convention
-  #     scripts 10/12 use for acc/sep label joins.
+  #     scripts 09/11 use for acc/sep label joins.
   # See codebook/codebook_notes.md "Date conventions across hives".
 
   if (is.null(var_name)) {

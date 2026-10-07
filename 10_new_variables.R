@@ -2,7 +2,7 @@
 # Purpose: Create derived indicator variables for emp, acc, and sep hives.
 #          Variables added: leg_branch, jud_branch, a1_court, exec_branch,
 #          eop, core_eop, pres_admin.
-#          Runs after 10, and depends on it for more than ordering: it reads
+#          Runs after 09, and depends on it for more than ordering: it reads
 #          agency_code_fwoc, which 10 nulls for the codes absent from the OPM
 #          master, to null this script's indicators for those rows.
 #          Also reads the hand-curated EOP membership table at

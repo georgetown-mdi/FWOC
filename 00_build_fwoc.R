@@ -5,14 +5,14 @@
 #          leaks; the build halts on the first non-zero exit code.
 #
 #          The chain has four phases:
-#            assemble + enrich   01 -> 15, ending in the final emp/acc/sep hives
+#            assemble + enrich   01 -> 14, ending in the final emp/acc/sep hives
 #            aggregate           the Superset dashboard parquet
 #            VALIDATE            the gate -- nothing past this point runs if a
 #                                hard check fails
 #            document + publish  the codebook, then the public export and R2 push
 #
 #          The gate sits BEFORE the codebook because codebook/01 is by far the
-#          most expensive post-15 step (~177 full hive scans) and the likeliest
+#          most expensive post-14 step (~177 full hive scans) and the likeliest
 #          routine failure is Ex.5's history check. Failing first means not
 #          paying for the codebook on a bad build. The trade: on a failed run the
 #          committed codebook stays one cycle behind the hives.
@@ -99,21 +99,21 @@ run_step("04_fwd_hive_assembly_opm_data_gov.R",       "04 FWD assembly")
 # ====================================================================
 # Harmonize, label, derive, finalize
 # ====================================================================
-# There is no 06 here: the source repo's 06_label_codes.R became
-# setup/build_labels.R, which runs in setup/00_run_setup.R before this script.
+# The label tables are built by setup/build_labels.R, which runs in
+# setup/00_run_setup.R before this script.
 run_step("05_bz_compatibility.R",                     "05 BZ compatibility / staging")
-run_step("07_bz_duty_station_labels.R",               "07 Duty station labeling")
-run_step("08_bz_duty_station_state.R",                "08 BZ -> final amalgamation")
-run_step("09_fwd_compatibility.R",                    "09 FWD -> final amalgamation")
-run_step("10_agency_names.R",                         "10 Agency names")
-run_step("11_new_variables.R",                        "11 New variables")
+run_step("06_bz_duty_station_labels.R",               "06 Duty station labeling")
+run_step("07_bz_duty_station_state.R",                "07 BZ -> final amalgamation")
+run_step("08_fwd_compatibility.R",                    "08 FWD -> final amalgamation")
+run_step("09_agency_names.R",                         "09 Agency names")
+run_step("10_new_variables.R",                        "10 New variables")
 # Builds the PATCO crosswalk that 12 consumes (occupational_category_code_fwoc).
-# Must run after 09 (final hives populated) and before 12; sources emp/acc/sep + raw BZ.
-run_step("crosswalks/build_patco_crosswalk.R",        "11b PATCO crosswalk build")
-run_step("12_harmonize_labels.R",                     "12 Harmonize labels")
-run_step("13_duty_station_backfill.R",                "13 Duty station backfill")
-run_step("14_bls_macro.R",                            "14 BLS macro")
-run_step("15_finalize_hive.R",                        "15 Finalize hive")
+# Must run after 08 (final hives populated) and before 11; sources emp/acc/sep + raw BZ.
+run_step("crosswalks/build_patco_crosswalk.R",        "10b PATCO crosswalk build")
+run_step("11_harmonize_labels.R",                     "11 Harmonize labels")
+run_step("12_duty_station_backfill.R",                "12 Duty station backfill")
+run_step("13_bls_macro.R",                            "13 BLS macro")
+run_step("14_finalize_hive.R",                        "14 Finalize hive")
 
 # ====================================================================
 # Aggregate: the Superset dashboard parquet
@@ -148,16 +148,16 @@ run_step("codebook/02_codebook_build.R",              "Codebook 02 Codebook buil
 # Publish
 # ====================================================================
 # Both run only if every hard check above passed.
-run_step("16_public_data_export.R",                   "16 Public data export")
+run_step("15_public_data_export.R",                   "15 Public data export")
 
 # 17 carries its own gate: it stop()s unless FWOC_PUBLISH=1, so an unattended build
 # cannot publish. Honour that gate here rather than calling it and failing -- a
 # refusal is the normal outcome, and logging it as [ERROR] every month would train
 # the operator to ignore real errors.
 if (identical(Sys.getenv("FWOC_PUBLISH"), "1")) {
-  run_step("17_push_to_r2.R",                         "17 Push public data to R2")
+  run_step("16_push_to_r2.R",                         "16 Push public data to R2")
 } else {
-  log_line("\n[SKIP] 17 Push public data to R2 -- FWOC_PUBLISH is not set to 1\n")
+  log_line("\n[SKIP] 16 Push public data to R2 -- FWOC_PUBLISH is not set to 1\n")
 }
 
 total <- difftime(Sys.time(), start_time, units = "hours")

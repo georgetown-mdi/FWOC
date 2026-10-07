@@ -11,8 +11,8 @@
 #              classification applied to every period, which also fills the
 #              2005-2009 FWD occupational_category gap.
 #              See crosswalks/build_patco_crosswalk.R.
-#          Runs after 10 (which writes the agency labels this script joins on)
-#          and 11.
+#          Runs after 09 (which writes the agency labels this script joins on)
+#          and 10.
 
 library(arrow)
 library(dplyr)
@@ -143,7 +143,7 @@ poi_map     <- read_csv(paste0(lbl_path, "poi_labels.csv"),        col_types = "
 stop_if_not_unique(acc_map, "accession_category_code",  "acc_map")
 stop_if_not_unique(sep_map, "separation_category_code", "sep_map")
 # The POI key includes agency_subelement -- the OPM label column, not just the
-# code -- which is another reason this script must run after 10.
+# code -- which is another reason this script must run after 09.
 poi_key <- c("personnel_office_identifier_code", "agency_subelement_code",
              "agency_subelement")
 stop_if_not_unique(poi_map, poi_key, "poi_map")
@@ -201,7 +201,7 @@ nsftp_appt_codes <- c("10", "15", "30", "32", "34", "35", "36", "38", "50", "55"
 # The three era-harmonizations that apply to all three hives.
 #   age_bracket:           BZ is title case, FWD upper case.
 #   length_of_service_ord: BZ spells its missing value UNSP, expanded here.
-#                          FWD leaves it NULL (see 09).
+#                          FWD leaves it NULL (see 08).
 #   nsftp_indicator_fwoc:  derived for every period, which fills the gap where
 #                          OPM published no nsftp_indicator (2005-03 to 2009-12).
 add_harmonized_cols <- function(data) {

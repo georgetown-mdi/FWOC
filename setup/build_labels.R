@@ -1,6 +1,6 @@
 # Author: Mark Richardson and Claude Code
 # Purpose: Build the OPM code->label maps and write them to metadata/labels/*.csv
-#   (consumed by 10_agency_names.R / 12_harmonize_labels.R). Does not touch any
+#   (consumed by 09_agency_names.R / 11_harmonize_labels.R). Does not touch any
 #   hive data.
 #
 #   The OPM master code tables may change on the monthly metadata refresh, so the
@@ -369,8 +369,8 @@ write_csv(sep_codes, file = "metadata/labels/sep_labels.csv", na = "")
 # ============================================================
 
 # From 2026-09 OPM serves Duty Stations only as a two-sheet .xlsx (see
-# read_duty_stations() in utils/code_table_functions.R). 08_bz_duty_station_state.R
-# and 13_duty_station_backfill.R still read the flat CSV, so it is derived here and
+# read_duty_stations() in utils/code_table_functions.R). 07_bz_duty_station_state.R
+# and 12_duty_station_backfill.R still read the flat CSV, so it is derived here and
 # written beside the workbook under the same download date. find_code_table()
 # rejects >1 csv, so an old derived CSV must be archived to prior_downloads/ along
 # with its workbook -- the archived copy is what next month's gate diffs against.

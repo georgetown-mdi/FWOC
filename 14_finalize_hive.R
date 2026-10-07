@@ -99,7 +99,7 @@ check_manifest <- function(ds, flag, name) {
     if (length(gone) > 0)
       paste0(length(gone), " column(s) marked keep but absent: ",
              paste(gone, collapse = ", "),
-             " -- either an upstream step (10-14) did not run, or the field ",
+             " -- either an upstream step (09-13) did not run, or the field ",
              "was withdrawn upstream.")
   )
 

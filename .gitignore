@@ -167,7 +167,7 @@ acc_hive/
 sep_hive/
 buzz_feed/
 data_opm_gov/
-# published to R2 by 17_push_to_r2.R
+# published to R2 by 16_push_to_r2.R
 export/
 # published to GCS by aggregate/push_to_gcs.R, then read by BigQuery/Superset
 aggregate_data/

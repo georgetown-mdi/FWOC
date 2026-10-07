@@ -16,7 +16,7 @@
 #              _experimental), from the *_labels_fwoc_experimental.csv lookups.
 #              These are the unvetted full coding; their label windows differ
 #              from the fwoc lookups', so they are joined separately.
-#          Runs after 08 and 09, which write the BZ and FWD rows of the final
+#          Runs after 07 and 08, which write the BZ and FWD rows of the final
 #          hives, and before new variables and the remaining label joins so that
 #          downstream scripts operate on a narrower hive.
 

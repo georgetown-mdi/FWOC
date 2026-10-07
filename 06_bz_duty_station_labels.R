@@ -2,8 +2,8 @@
 # Purpose: Label duty station in the emp/status, accessions, and separations
 #          data for BZ era and write it to the staging hives.
 #          Runs after 05, which rebuilds those hives unlabelled. BZ is frozen,
-#          so 05 and 07 are first-run-only -- but skip or run them as a PAIR:
-#          05 alone leaves the BZ era with no duty station labels; 07 alone
+#          so 05 and 06 are first-run-only -- but skip or run them as a PAIR:
+#          05 alone leaves the BZ era with no duty station labels; 06 alone
 #          re-joins the label columns onto themselves, and Arrow suffixes them
 #          .x/.y rather than erroring. The guards below halt before that join.
 
@@ -25,7 +25,7 @@ load("metadata/labels/duty_station/ds_labels.RData")
 emp <- open_dataset("buzz_feed/bz_emp_hive_staging",
                     partitioning = c("year", "month"))
 
-# Not re-runnable in place: halt if 07 has already labelled this hive
+# Not re-runnable in place: halt if 06 has already labelled this hive
 stopifnot(!any(grepl("^(country|county|city)_name", names(emp))))
 
 # Get the observed duty station codes
@@ -130,7 +130,7 @@ rm(ds_obs, emp)
 acc <- open_dataset("buzz_feed/bz_acc_hive_staging",
                     partitioning = c("year", "month"))
 
-# Not re-runnable in place: halt if 07 has already labelled this hive
+# Not re-runnable in place: halt if 06 has already labelled this hive
 stopifnot(!any(grepl("^(country|county|city)_name", names(acc))))
 
 ds_obs <- acc |>
@@ -224,7 +224,7 @@ rm(ds_obs, acc)
 sep <- open_dataset("buzz_feed/bz_sep_hive_staging",
                     partitioning = c("year", "month"))
 
-# Not re-runnable in place: halt if 07 has already labelled this hive
+# Not re-runnable in place: halt if 06 has already labelled this hive
 stopifnot(!any(grepl("^(country|county|city)_name", names(sep))))
 
 ds_obs <- sep |>

@@ -1,7 +1,7 @@
 # Author: Mark Richardson and Claude Code
 # Purpose: Build the FWOC agency and subagency label tables
 #   (metadata/labels/agency_labels_fwoc.csv, subagency_labels_fwoc.csv; consumed
-#   by 10_agency_names.R) and the codebook's table of differences from OPM
+#   by 09_agency_names.R) and the codebook's table of differences from OPM
 #   (metadata/codebook/opm_fwoc_differences.csv). Does not touch any hive data.
 #
 #   The FWOC labels are OPM's labels (metadata/labels/agency_labels.csv,
@@ -88,7 +88,7 @@ agy_ship <- agy_start |>
 # ============================================================
 #### Subagency ####
 
-# 10_agency_names.R recodes every Air Force, Army and Navy subelement to DDAF,
+# 09_agency_names.R recodes every Air Force, Army and Navy subelement to DDAF,
 # DDAR or DDNV, so those three codes need a label row and the departments' own
 # subelement codes are never looked up. OPM's table has no row for the three
 # codes; each takes the label and dates of OPM's agency row.

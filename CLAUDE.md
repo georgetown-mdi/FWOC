@@ -24,11 +24,11 @@ The only top-level era split is BZ vs FWD — branch on that, not on BZ's three 
 The repository root **is** the project root — run scripts from here and reference paths root-relative (`metadata/...`, `utils/...`, `source("utils/x.R")`).
 
 ```
-00_build_fwoc.R  Runs the numbered ETL steps (01–17), then aggregate, validation, codebook
+00_build_fwoc.R  Runs the numbered ETL steps (01–16), then aggregate, validation, codebook
 setup/           Builders of inputs to the main ETL pipeline scripts (run 00_run_setup.R first)
 utils/           Reusable helpers sourced by the scripts
 metadata/        Static inputs used by the main ETL pipeline scripts
-crosswalks/      Builder of the PATCO crosswalk consumed by step 12
+crosswalks/      Builder of the PATCO crosswalk consumed by step 11
 aggregate/       Builders of the dashboard aggregate tables
 validation/      Post-build validation suite; gates the codebook and publish steps
 codebook/        Rebuilds the codebook table from the built hives

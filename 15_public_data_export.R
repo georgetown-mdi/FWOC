@@ -289,7 +289,7 @@ write_export <- function(df, basename, csv_out, dta_out,
 message("=== Parquet hives ===")
 for (hive in c("emp_hive", "acc_hive", "sep_hive")) {
   message(hive, " (rsync)")
-  # rsync, NOT `cp -al` hardlinks: 15_finalize_hive.R rewrites the hive by
+  # rsync, NOT `cp -al` hardlinks: 14_finalize_hive.R rewrites the hive by
   # unlink-and-create, so a hardlinked export tree would keep serving the
   # PREVIOUS generation's parquet files while passing every existence check.
   st <- system2("rsync", c("-a", "--delete",
@@ -490,7 +490,7 @@ stopifnot(
 )
 
 # Partition keys come back LAST, not in their original position -- so restore
-# the published column order that 15_finalize_hive.R established. Without this
+# the published column order that 14_finalize_hive.R established. Without this
 # the whole-agency files would carry a different column order than the by-year
 # and by-decade files.
 emp_cols <- names(emp)
@@ -574,7 +574,7 @@ write_csv(lookup, file.path(export_root, "agency_code_lookup.csv"), na = "")
 # ============================================================
 
 # An agency that disappears from the hive leaves its archive behind forever,
-# and 17 republishes it -- the export tree accumulates data no longer in the
+# and 16 republishes it -- the export tree accumulates data no longer in the
 # hive it claims to publish.
 #
 # Pruning happens HERE, at the end, rather than by clearing the tree at the

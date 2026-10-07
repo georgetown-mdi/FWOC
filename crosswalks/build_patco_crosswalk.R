@@ -7,7 +7,7 @@
 #          year from the final emp_hive's own published value.
 #
 #          Scope: built from emp/STATUS only -- the dense as-of snapshot that
-#          covers all active codes each period -- and applied (in script 12) to
+#          covers all active codes each period -- and applied (in script 11) to
 #          the emp hive only. The same crosswalk can be applied to acc/sep by
 #          users who want PATCO there; we do not do that in-pipeline because
 #          acc/sep are sparse flows and a first-of-month label would inherit the
@@ -29,8 +29,8 @@
 #          split is intra-day, and a first-of-month label convention for
 #          acc/sep data collapses the only within-month transitions anyway.)
 #
-#          Run from 00_build_fwoc.R after step 11 (final emp_hive populated and
-#          enriched) and before step 12, which consumes the CSVs written here.
+#          Run from 00_build_fwoc.R after step 10 (final emp_hive populated and
+#          enriched) and before step 11, which consumes the CSVs written here.
 #          Construction: pushed-down arrow distinct() per source, then
 #          vectorized counting in R.
 
@@ -94,7 +94,7 @@ gap_drift <- c(
   if (length(setdiff(observed_gap, gap_years)) > 0)
     paste0("no PATCO in FWD year(s) ",
            paste(setdiff(observed_gap, gap_years), collapse = ", "),
-           " -- add them to gap_years or 12 will leave them NA")
+           " -- add them to gap_years or 11 will leave them NA")
 )
 if (length(gap_drift) > 0) {
   stop("gap_years no longer matches the data --\n  ", paste(gap_drift, collapse = "\n  "))
@@ -196,10 +196,10 @@ message(sprintf("residual left blank: %d rows (%.3f%%)",
                 100 * sum(gapcells$n[!gapcells$covered]) / tot))
 
 # Enforced, not just reported. The gap rows of this crosswalk are built from BZ
-# status but applied by 12 to FWD emp rows, so Level 2's
+# status but applied by 11 to FWD emp rows, so Level 2's
 # (series, pay_plan_code, grade) key has to match across two eras' formatting
 # conventions. If either side ever changes how grade or pay_plan_code is padded,
-# L2 stops matching, coverage collapses, and 12 leaves five years of
+# L2 stops matching, coverage collapses, and 11 leaves five years of
 # occupational_category_code_fwoc NA with no error anywhere in the build. The
 # floor is what turns that from silent into fatal. Measured 98.065% on the
 # 2026-07 build; 95% sits well below normal drift and well above a real break.
