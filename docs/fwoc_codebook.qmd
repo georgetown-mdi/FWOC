@@ -22,7 +22,7 @@ editor:
 
 # How to Read this Codebook
 
-This codebook documents every variable published in the Federal Workforce OpenCommons (FWOC) data. The Field Definitions section provides explanations of each field in the codebook. The Variable Reference section has one entry per variable, with each entry providing the variable name, variable definition, and field values for that variable. The Value Labels section provides lookup tables of code-label pairs for variables with a small set of possible values and references for variables with a large set of possible values. This codebook is derived from a companion CSV file: `fwoc_codebook_table.csv` available on GitHub.
+This codebook documents every variable published in the Federal Workforce OpenCommons (FWOC) data. The Field Definitions section provides explanations of each field in the codebook. The Variable Reference section has one entry per variable, with each entry providing the variable name, variable definition, and field values for that variable. The Value Labels section provides lookup tables of code-label pairs for variables with a small set of possible values and references for variables with a large set of possible values. This codebook is derived from a companion CSV file, `metadata/codebook/fwoc_codebook_table.csv`, in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC).
 
 # Field Definitions
 
@@ -131,7 +131,7 @@ FWOC has also produced a set of experimental names. They are not part of the pub
 
 The experimental names are not validated, and they have a fundamental asymmetry. The review covered only cases where more than one name maps to the same code. A review of organizational and functional stability that is triggered by a name change is incomplete: it does not capture structural changes that do not coincide with a name change. For example, the Social Security Administration was part of the Department of Health and Human Services until March 31, 1995. Is HHS including SSA comparable to HHS without SSA? HHS had 122,663 employees as of 1995-03-31 but only 57,906 at the next reporting date, 1995-06-30. A name variable that claimed to identify structural breaks but did not review all agencies would be misleading. Identifying these structural breaks is ongoing work at FWOC.
 
-The experimental lookup tables are kept in the FWOC GitHub repository for interested users to review. The variables are described, with their limits, in a separate document, *FWOC Experimental Agency and Subagency Labels*, in the `docs/` folder of the repository.
+The experimental lookup tables are kept in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC) for interested users to review. The variables are described, with their limits, in a separate document, *FWOC Experimental Agency and Subagency Labels*, in the `docs/` folder of the repository.
 
 ```{r}
 #| label: fwoc-scope
@@ -247,7 +247,7 @@ fwoc_diff_table("subagency", "FWOC subagency names that differ from OPM's displa
 
 ## Experimental lookup tables (not in the published data)
 
-Two further lookup tables, `metadata/labels/agency_labels_fwoc_experimental.csv` and `subagency_labels_fwoc_experimental.csv`, come from a fuller, AI-coded classification of OPM's name changes. They are under construction, their results are not reliable, and they are not part of the published data. They are kept in the FWOC repository for transparency and are described in a separate document, *FWOC Experimental Agency and Subagency Labels*, in the `docs/` folder of the repository.
+Two further lookup tables, `metadata/labels/agency_labels_fwoc_experimental.csv` and `subagency_labels_fwoc_experimental.csv`, come from a fuller, AI-coded classification of OPM's name changes. They are under construction, their results are not reliable, and they are not part of the published data. They are kept in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC) for transparency and are described in a separate document, *FWOC Experimental Agency and Subagency Labels*, in the `docs/` folder of the repository.
 
 # Variable Reference
 
@@ -376,4 +376,4 @@ are not reproduced here. The underlying files are `metadata/labels/agency_labels
 
 # AI Disclosure
 
-The FWOC is built on the foundation laid by a prior curated dataset based on OPM's FedScope data, which was wholly human created: the project author wrote its pipeline, codebook, user guide and quick start guide with assistance from Dr. Benjamin Reese, and the current versions revise and extend that work. Anthropic's Claude models are used to develop and maintain the FWOC. The AI assisted in writing and proofing the code of the pipeline that builds the curated data, in researching the agency and subagency names described in the FWOC Agency and Subagency Variables section, and in drafting and proofing the user documents, including this codebook. The project author defines each task, decides every question of judgment, and reviews the results, though not every source document the AI read; that verification is ongoing. Every line of code was reviewed by the project author before it was committed.
+The FWOC is built on the foundation laid by a prior curated dataset based on OPM's FedScope data, which was wholly human created: the project author wrote its pipeline, codebook, user guide and quick start guide with assistance from Dr. Benjamin Reese, and the current versions revise and extend that work. Anthropic's Claude models are used to develop and maintain the FWOC. The AI assisted in writing and proofing the code of the pipeline that builds the curated data, in researching the agency and subagency names described in the FWOC Agency and Subagency Variables section, and in drafting and proofing the user documents, including this codebook. The project author defines each task, decides every question of judgment, and reviews the results, though not every source document the AI read; that verification is ongoing. Every line of code was reviewed by the project author before it was committed. The code that builds FWOC, the lookup tables it uses, and the source of this codebook are public in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC).
