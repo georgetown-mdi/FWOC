@@ -1,0 +1,91 @@
+---
+title: "FWOC Experimental Agency and Subagency Labels"
+subtitle: "Under construction. Not for use in analysis."
+date: 2026-10-06
+date-format: "long"
+format:
+  pdf:
+    toc: true
+    colorlinks: true
+    linkcolor: "RoyalBlue"
+    citecolor: "RoyalBlue"
+    urlcolor:  "RoyalBlue"
+    toccolor:  "RoyalBlue"
+execute:
+  echo: FALSE
+---
+
+# Status
+
+**This work is under construction, and its results are not reliable.** The experimental lookup tables described here are an unfinished attempt to classify every change in the names OPM displays for agency and subagency codes, and to link organizations across changes of code. They were coded by AI models, the record of evidence behind them has known defects that are not yet resolved, and the review they rest on is incomplete by design (see below). They are not part of the published FWOC data and should not be used in analysis. They are kept in the FWOC repository, with this description, for transparency and for researchers who want to examine the approach.
+
+The FWOC Codebook describes the FWOC names that are published and recommended, and explains how they differ from these tables.
+
+```{r}
+#| label: scope
+#| message: false
+
+library(readr)
+library(dplyr)
+
+read_codes <- function(path) {
+  read_csv(path, na = "", col_types = cols(.default = "c"), show_col_types = FALSE)
+}
+n_multi_name <- function(labels) {
+  labels |> group_by(code) |> summarise(n = n_distinct(label), .groups = "drop") |> filter(n > 1) |> nrow()
+}
+opm_agency    <- read_codes("metadata/labels/agency_labels.csv")
+opm_subagency <- read_codes("metadata/labels/subagency_labels.csv")
+exp_subagency <- read_codes("metadata/labels/subagency_labels_fwoc_experimental.csv")
+scope <- list(
+  agency_codes    = n_distinct(opm_agency$code),
+  agency_multi    = n_multi_name(opm_agency),
+  subagency_codes = n_distinct(opm_subagency$code),
+  subagency_multi = n_multi_name(opm_subagency),
+  subagency_rev   = n_distinct(exp_subagency$code[!is.na(exp_subagency$case)])
+)
+fmt <- function(n) format(n, big.mark = ",")
+```
+
+# The experimental lookup tables
+
+The experimental names and coding variables are not in the published FWOC data. They come from a fuller coding of OPM's name changes than the FWOC names rest on, they are not vetted to the same standard, and we do not recommend them for analysis. The two lookup tables are kept in the repository, `metadata/labels/agency_labels_fwoc_experimental.csv` and `metadata/labels/subagency_labels_fwoc_experimental.csv`, for users who want to examine them or apply them with those limits in mind.
+
+Each row of a table gives a code, a name (`label`), and the dates between which the row applies (`date_from`, `date_to`). To apply a table, match `code` to `agency_code_fwoc` or `agency_subelement_code_fwoc` and keep the row whose dates contain the record's date: `date` in the employment data, and the first day of the record's month in the accessions and separations data.
+
+`label` is the experimental name. Where a name change was judged to be a rename of the same organization, the most recent name is applied to the code's whole period. Where the organization was judged to have changed, or the code to have been reassigned, the distinct names are kept.
+
+`case` describes the name change that produced the row, so that a user can tell a rename from an organizational break. The values are:
+
+- `first_appearance`: the code's first name in OPM's lookup table, for a code whose name later changes.
+- `new_agency`: the new name marks a different organization, through a change in function, structure or appointment authority. Records before and after the change should not be treated as one unit.
+- `nominal`: a rename of the same organization. The name is the most recent name throughout.
+- `code_reuse`: OPM reassigned the code to an unrelated organization.
+
+`case` is populated for every agency code that has more than one name in OPM's lookup table and, at the subagency level, for the prominent subunits of the fifteen executive departments (the list in Table 2 of the Administrative Conference of the United States *Sourcebook of United States Executive Agencies*) that have more than one name. It is missing for single-name codes, for subagency codes outside that list, and for continuation rows that carry no name change. It records name-change events only. A code that kept its name can still have changed in function or structure, and an empty value is not evidence that it did not.
+
+`func_id` identifies an organization whose lineage crosses OPM code boundaries, so that its records can be followed under every code it has reported under. Rows that share a value are the same continuous organization: `opic` is on the Overseas Private Investment Corporation at `PQ` (1972 to 1980), `AMPC` (1980 to 1999) and `GB` (1999 to 2019); `coast_guard` follows the Coast Guard from the Department of Transportation (`TD02`) into the Department of Homeland Security (`HSAC`, from 2003). The value is missing for the great majority of codes, whose continuity is captured by the code itself, and for lineages that split or merged.
+
+`reorg_id` marks participation in one of three major reorganizations: `doe_creation` (Department of Energy Organization Act of 1977), `hew_split` (Department of Education Organization Act of 1979, which divided Health, Education, and Welfare into Health and Human Services and Education) and `dhs_creation` (Homeland Security Act of 2002). Predecessor rows carry the value from their first appearance to the reorganization date and successor rows from the reorganization date forward, so the records that moved can be assembled on either side of the event. Missing for every other row.
+
+# What to know before relying on the experimental tables
+
+Five features of how they were produced bear on how far they can be trusted.
+
+**1. Review was triggered by name changes.** A code was examined only when OPM's table displays more than one name for it. An organization that changed its structure or function while keeping its name was never examined, and nothing in the variables marks the change. The coding variables therefore classify name changes; they are not a record of organizational change in general, and a code with no classification has not been found stable, only unexamined.
+
+**2. Only prominent subagencies were reviewed.** At the agency level, every code with more than one name was reviewed (`r scope$agency_multi` of `r scope$agency_codes` codes). At the subagency level, review was limited to the prominent subunits of the fifteen executive departments listed in Table 2 of the Administrative Conference of the United States' *Sourcebook of United States Executive Agencies*, together with their direct predecessors and successors. That is `r scope$subagency_rev` of the `r scope$subagency_multi` subagency codes with more than one OPM name, out of `r fmt(scope$subagency_codes)` subagency codes in all; OPM's count of multi-name codes includes names that differ only in spelling or an appended note. The remaining subagency codes carry OPM's names, apart from spelling and note repairs, and their name changes are neither standardized nor classified. The subelement row that stands for an independent agency itself (`XX00`) follows the agency-level result.
+
+**3. Dates are OPM's.** Each row of the experimental lookup files begins and ends where OPM's table changes the name, even where the documents show that the legal change took effect earlier or later.
+
+**4. The coding was done by AI models under human direction, against a fixed body of documents.**
+
+*The evidence.* Decisions were made against a corpus of primary sources: OPM's master lookup table; the United States Statutes at Large, volumes 65 through 137 (1951 to 2023); the numbered executive orders from EO 7532 through EO 14404; the Federal Register from January 2000 through May 2026 in full text, with earlier daily issues retrieved from govinfo.gov as needed and each search logged; departmental orders and directives published on agencies' own `.gov` sites; and the annual *U.S. Government Manual* from 1972 through 2025, whose appendix on organizational changes served as the finding aid and whose main body served as a snapshot of each organization's structure and functions. No source outside this corpus was used.
+
+*The standard.* A name change is classified as a rename of the same organization only on one of two grounds: the statute, executive order, notice or departmental order that made the change was located and changes nothing but the name; or no such document could be found in the corpus and the *Government Manual* describes the organization the same way before and after the change, with no organizational change recorded at that date. The *Manual* alone never establishes a break. When no document is found and the *Manual* test fails, the change is classified as a new organization by default. The default is deliberately conservative, so the new-organization class combines documented breaks with renames whose documentation was not found. A reassigned code requires a documented end to the earlier organization and no document connecting it to the later one.
+
+*Who decided.* The coding rules were developed iteratively with Claude (Opus 4.7 and 4.8, in Claude Cowork) during a first coding pass from May to July 2026. A second, independent pass was run by Claude (Fable 5.1) on 2026-07-08 under the finished rules. The two passes were compared code by code, and every difference was researched, with further document searches run by Claude agents (Fable 5.1 and Opus 5), and decided by the project author between 2026-09-20 and 2026-09-26. The author approved every difference between the passes and accepted the codings on which the passes agreed, re-examining agreed codings only where a convention adopted during the reconciliation required it. The human review covered the decisions and their written rationale, not the underlying documents: the author has not independently read the cited statutes, orders, notices and *Manual* entries, so the coding rests on the models' reading of the corpus.
+
+**5. A check of the written record found defects that are not yet resolved.** In September 2026 the record of evidence behind the coding was checked against the documents it cites. The check confirmed 124 defects: some rows of the lookup files disagree with the written decision, and other decisions rest on a citation, a quotation or a description of a document that the document does not bear out. A decision whose evidence is defective is not established. Until the defects are resolved, the tables are labeled experimental and kept out of the published data, and the record of evidence is not published.
+
+

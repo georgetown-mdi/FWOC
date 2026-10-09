@@ -1,0 +1,415 @@
+---
+title: "Federal Workforce OpenCommons User Guide"
+date: "10/09/2026"
+format:
+  pdf:
+    colorlinks: true
+    linkcolor: "RoyalBlue"   # internal: TOC, \ref to tables/figures
+    citecolor: "RoyalBlue"   # bibliography
+    urlcolor:  "RoyalBlue"   # external URLs
+    toccolor:  "RoyalBlue"
+execute:
+  echo: FALSE
+---
+
+```{r}
+library(tinytable)
+```
+
+# About this Guide
+
+This User Guide provides information for using the [Federal Workforce OpenCommons](https://opencommons.mdi.georgetown.edu/fwoc). 
+
+**Before You Begin** lists the points a user must know before working with the data. **Data Types and Sources** describes the three curated datasets and the two OPM data sources they are derived from. **Things to Know About the Data** covers which agencies and personnel the data include and exclude, how coverage has changed over time, what is redacted, and known data quality problems, including breaks in agency and subagency series. **Executive Department Reporting and Major Executive Department Reorganizations** describes the limited reporting of subagencies in the Departments of State and Energy and lists the agencies moved by the creation of the Departments of Education, Health and Human Services and Homeland Security. Variable definitions, date ranges and code labels are in the [FWOC Codebook](https://drive.google.com/file/d/1zw0yHus6E5ECK23D1LxrRe8lzxjdAPuA/view?usp=sharing), and file formats and download instructions are on the FWOC website's Download Data page. The code that builds FWOC from its source files, the lookup tables it uses, and the sources of this Guide and the Codebook are in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC).
+
+# Before You Begin
+
+- The data include (1) employment data - a quarterly and, beginning July 2011, monthly census of almost all federal workers - and (2) accessions and separations data - flow data documenting employee transfers, hires, and exits. See **Data Types and Sources** for more information.  
+
+- The [FWOC Codebook](https://drive.google.com/file/d/1zw0yHus6E5ECK23D1LxrRe8lzxjdAPuA/view?usp=sharing) contains a full explanation of each variable, date ranges, and associated category labels for the employment, accessions and separations data.  
+
+- The source data split military departments (Departments of the Air Force, Army, and Navy) from the Department of Defense, despite the military departments being under the DOD legally. The OPM variables `agency_code` and `agency` keep that coding. OPM's own `department_code` and `department` variables nest the three military departments under DOD, but OPM publishes them only from 2015. The FWOC variables `agency_code_fwoc` and `agency_fwoc` nest the military departments under DOD for the whole series from 1973, so a user who wants the entire DOD should group by the FWOC variables.
+
+- We recommend you use the FWOC agency and subagency names, `agency_fwoc` and `agency_subelement_fwoc`, rather than OPM's `agency` and `agency_subelement`. The FWOC versions make several corrections to OPM's names: names that misdescribe the unit that reports are replaced (for example, OPM labels code FR as "FEDERAL RESERVE SYSTEM" while the only reporting unit is the Consumer Financial Protection Bureau), Office of the Secretary names are standardized, and name changes that evidence indicates are administrative only, with no structural or functional change to the agency, are re-coded so that they do not look like breaks in the agency's time series. OPM's names remain available in the data. Every difference between OPM's names and the FWOC version is listed, with its reason, in the FWOC Codebook. However, a stable name is not proof of a comparable agency across time: see **Breaks in agency and subagency series** below.
+
+- The data do not include employee information from the Federal Reserve Board of Governors, the U.S. Postal Service, many intelligence agencies, and certain other agencies. See **Coverage: Agencies** below for details.  
+
+- The data include employee information from several non-Executive Branch agencies, including certain Legislative Branch agencies and Article I courts. See **Coverage: Agencies** below for details. The data include indicator variables for subsetting to the executive, legislative, or judicial branches. Coverage of the legislative and judicial branches is sparse, so the data are most useful for analyzing the executive branch workforce.
+
+- Certain personnel such as Foreign Service Personnel in the State Department and the Public Health Service Commissioned Officer Corps are not included. See **Coverage: Personnel** below for details. 
+
+- Data for certain agencies, including some Legislative Branch, Judicial Branch and Executive Office of the President units, are available only for early time periods (e.g., before 1983). See **Coverage: Agencies** and **Historical Coverage: Executive Office of the President**.  
+
+- Variables, such as duty station, are redacted for sensitive agencies and positions. See **Redactions** and **Overstatement of Employment in the District of Columbia** below for details.  
+
+- In the accessions data, a transfer between agencies is recorded only when the new position can be filled under the same appointing authority as the old one, which OPM's [Guide to Processing Personnel Actions](https://www.opm.gov/policy-data-oversight/data-analysis-documentation/personnel-documentation/processing-personnel-actions/guide_to_processing_personnel_actions.pdf) allows for competitive to competitive, Senior Executive Service to Senior Executive Service, and a few excepted appointments. An employee who leaves an excepted service position for another agency, or who moves between the competitive service, the excepted service and the Senior Executive Service, is recorded as a new hire at the receiving agency. Transfers in therefore run below transfers out in every year. Users measuring movement between agencies should rely on transfers out, or match accessions to separations by individual where `pseudo_id` allows. See `accession_category` in the FWOC Codebook.
+
+- Accessions and separations are filed by the month the action took effect, not the month OPM released it. OPM publishes each month's data on schedule and adds delayed submissions in later releases, and FWOC moves each late action to its effective month at the next rebuild. Counts for the most recent months are therefore incomplete and will rise in later versions of the data. Analyses of recent hiring or separations should allow for this, and counts taken from different versions of FWOC should not be compared without noting the version date. Data before 2005 are from a FOIA release and, therefore, do not change when the FWOC data are updated.
+
+- Information on file formats, data subsets, and suggested software packages to work with the data can be found on the [FWOC Download Data page](https://opencommons.mdi.georgetown.edu/fwoc/download-page).  
+
+# Data Types and Sources
+
+OPM publishes two types of data: employment (also called status data) and dynamic. The employment data are a census of almost all federal workers. There are two types of dynamic data: accessions and separations. Accessions are new hires or transfers into an agency. Separations are transfers out of an agency or exiting federal service. Beginning in 1988, the data differentiate types of accessions (e.g., new hire, transfer in) and separations (e.g, transfer out, quit, retirement). 
+
+The accession data further classify each hire or transfer-in into one of the categories shown in @tbl-accession-categories. These labels come from the published file `metadata/labels/acc_labels.csv`.
+
+```{r}
+#| label: tbl-accession-categories
+#| tbl-cap: "Accession category codes and labels"
+#| message: false
+
+library(readr)
+library(tinytable)
+
+read_csv("metadata/labels/acc_labels.csv", na = "") |>
+  setNames(c("Code", "Accession Category")) |>
+  tt() |>
+  style_tt(j = 1, bold = TRUE)
+```
+
+We combine OPM's administrative records from two sources: [OPM's Federal Workforce Data website](https://data.opm.gov/), and records that OPM released in response to three Freedom of Information Act (FOIA) requests and later [placed in the public domain by Jeremy Singer Vine of Buzzfeed News](https://archive.org/details/opm-federal-employment-data/docs/2015-02-11-opm-foia-response/). 
+
+@tbl-data-coverage details the source and date ranges for each data type. The third FOIA release did not include any dynamic data. We begin using the FWD data on 2005-01-01, which changes the as of date for Q4 data from 12-13 to 12-31. OPM updates the data monthly, on a two-month lag, and FWOC is rebuilt as each release arrives, so "present" in the table means the most recent month OPM has released.
+
+```{r}
+#| label: tbl-data-coverage
+#| tbl-cap: "Coverage of OPM employment and dynamic data by source and release"
+
+library(tinytable)
+library(tibble)
+
+tribble(
+  ~Type,        ~Source,               ~`Date Range`,                           ~`Time Granularity`,
+  "Employment", "First FOIA Release",  "1973-09-30 to 2014-06-30",              "Quarterly",
+  "Employment", "Second FOIA Release", "2014-09-30 to 2016-09-30",              "Quarterly",
+  "Employment", "Third FOIA Release",  "2016-12-13 to 2017-03-31",              "Quarterly",
+  "Employment", "FWD",                 "2005-03-31 to 2011-06-30",              "Quarterly",
+  "Employment", "FWD",                 "2011-07-31 to present",                 "Monthly",
+  "Dynamic",    "First FOIA Release",  "1982-01-01 to 2014-03-31",              "Daily",
+  "Dynamic",    "Second FOIA Release", "2014-04-01 to 2016-08-31",              "Monthly",
+  "Dynamic",    "FWD",                 "2005-01 to present",                    "Monthly"
+) |>
+  tt() |>
+  style_tt(j = 1, bold = TRUE)
+```
+
+# Things to Know About the Data
+
+## Current Coverage
+
+This section describes coverage of agencies and personnel. We begin with OPM's [data sources page](https://data.opm.gov/resources/data-sources) as of 2026-10-09 and supplemented OPM's description where appropriate.
+
+### Coverage: Agencies
+
+The following executive branch agencies are **excluded**. The dates below are from OPM's lookup table and from the employment data. In some cases, OPM appends a note to the agency name, "NOTE: ORGANIZATION DOES NOT MAKE HR SUBMISSIONS TO OPM. CODE MAY BE USED FOR OTHER DOCUMENTATION PURPOSES.", when the agency stops reporting workforce data to OPM while the code and name for the agency remain in the lookup table. FWOC's label files carry the name without the note, and the entries below give the date from which OPM's table carries it.
+
+- Federal Reserve - Board of Governors
+  - Note: The Consumer Financial Protection Bureau is included and reports under the Federal Reserve System's agency code. See the FWOC Agency and Subagency Variables section of the Codebook.
+- Central Intelligence Agency (CI)
+  - Note: Never in the data. "Does not make HR submissions" note from 1986-09-01.
+- Defense Intelligence Agency (DD05, a Department of Defense subagency)
+  - Note: In the data from 1973-09-30 to 1985-09-30. "Does not make HR submissions" note from 1986-09-01.
+- National Geospatial-Intelligence Agency
+  - Note: No code in OPM's table.
+- National Security Agency (SP)
+  - Note: Never in the data. OPM's code and name are valid only from 1972-06-01 to 1983-04-30.
+- Office of the Director of National Intelligence (OI)
+  - Note: Never in the data. Code valid from 2005-04-01 with the "does not make HR submissions" note throughout.
+- Official Residence of the Vice President (OV01)
+  - Note: Never in the data. Code valid from 2025-08-01.
+- Office of the Vice President (OV)
+  - Note: In the data from 1973-09-30 to 1976-12-13. "Does not make HR submissions" note from 1986-09-01.
+- President's Intelligence Advisory Board
+  - Note: No code in OPM's table.
+- Postal Regulatory Commission (PJ)
+  - Note: Never in the data. OPM's data sources page uses the agency's prior name, Postal Rate Commission. "Does not make HR submissions" note from 2006-11-01, when the name changed.
+- Tennessee Valley Authority (TV)
+  - Note: Never in the data. "Does not make HR submissions" note from 1986-09-01.
+- Executive Residence (EX)
+  - Note: In the data from 1973-09-30 to 2003-09-30. "Does not make HR submissions" note from 2003-12-01.
+- U.S. Postal Service (PO)
+  - Note: Never in the data. "Does not make HR submissions" note from 1986-09-01.
+- White House Office (WH01)
+  - Note: Never in the data. "Does not make HR submissions" note from 1986-09-01.
+
+**Legislative Branch** 
+
+OPM's data sources page says EHRI generally excludes the legislative branch and lists seven organizations that report. The data also contain observations from earlier legislative agencies that no longer report, and OPM's lookup table carries codes for others that never reported. All thirteen codes have `leg_branch` equal to 1.
+
+```{r}
+#| label: leg-table
+#| message: false
+library(tinytable)
+library(tibble)
+tribble(
+  ~`Agency`, ~`Code`, ~`In the employment data`, ~`Note`,
+  "Government Publishing Office", "LP", "1973-09 to present", "Named the Government Printing Office in the data through August 2025. Congress renamed it in December 2014.",
+  "General Accounting Office", "LG", "1973-09 to 1992-09", "Stopped reporting in 1992. Renamed the Government Accountability Office in 2004.",
+  "Architect of the Capitol", "LA", "never", "Code valid 1972 to 1983.",
+  "Congressional Budget Office", "LD", "never", "Code valid 1976 to 1983.",
+  "Library of Congress", "LC", "never", "Code valid 1972 to 1983.",
+  "U.S. Botanic Garden", "LB", "never", "Code valid 1972 to 1983.",
+  "Office of Compliance", "ZG", "1996-06 and 1996-09 only", "44 observations, with accessions from 1995-11 to 1996-09. Renamed the Office of Congressional Workplace Rights in 2019. The code remains valid.",
+  "Medicare Payment Advisory Commission", "ZL", "1997-12 to 2021-09", "Stopped reporting in 2021.",
+  "U.S. Commission on International Religious Freedom", "ZP", "1999-12 to present", "",
+  "U.S.-China Economic and Security Review Commission", "ZS", "2001-03 to present", "Named the U.S.-China Security Review Commission through 2002.",
+  "Dwight D. Eisenhower Memorial Commission", "ZU", "2008-09 to 2021-10", "",
+  "Financial Crisis Inquiry Commission", "YF", "2009-09 to 2010-12", "",
+  "Ronald Reagan Centennial Commission", "YG", "2010-12 to 2011-12", "9 observations."
+) |>
+  tt(caption = "Legislative branch agency codes and their presence in the employment data",
+     width = c(0.3, 0.08, 0.22, 0.4)) |>
+  theme_latex(multipage = TRUE, rowhead = 1) |>
+  format_tt(escape = TRUE) |>
+  style_tt(fontsize = 0.8, align = "l")
+```
+
+**Judicial Branch** 
+
+OPM's page says EHRI generally excludes the judicial branch, naming only the U.S. Tax Court, which is an Article I court and is listed below. The data hold observations from two judicial branch units under the Judicial Branch agency code (JL). These have `jud_branch` equal to 1.
+
+```{r}
+#| label: jud-table
+#| message: false
+library(tinytable)
+library(tibble)
+tribble(
+  ~`Agency`, ~`Code`, ~`In the employment data`, ~`Note`,
+  "Administrative Office of the U.S. Courts", "JL01", "1973-09 to 1986-09", "",
+  "Supreme Court, Office of the Marshal", "JL02", "1980-12 only", "1 observation.",
+  "Supreme Court of the United States", "JL03", "never as the Supreme Court", "Code valid for the Supreme Court 1984 to 1999, then reused for the Tax Court from 2013."
+) |>
+  tt(caption = "Judicial branch codes and their presence in the employment data",
+     width = c(0.3, 0.08, 0.22, 0.4)) |>
+  theme_latex(multipage = TRUE, rowhead = 1) |>
+  format_tt(escape = TRUE) |>
+  style_tt(fontsize = 0.8, align = "l")
+```
+
+**Article I Courts**
+
+Three Article I courts appear. They have `a1_court` equal to 1 and `jud_branch` equal to 0.
+
+```{r}
+#| label: a1-table
+#| message: false
+library(tinytable)
+library(tibble)
+tribble(
+  ~`Court`, ~`Code`, ~`In the employment data`, ~`Note`,
+  "U.S. Tax Court", "LT", "1973-09 to 2013-08", "Own agency code through August 2013.",
+  "U.S. Tax Court", "JL03", "2013-09 to present", "Moved under the Judicial Branch agency code in August 2013 as its only subagency. The FWOC agency name for JL from that date is \"U.S. Tax Court\" rather than \"Judicial Branch.\"",
+  "U.S. Court of Veterans Appeals", "JV, then ZD", "1989-09 only", "10 observations under JV. The ZD code, valid 1994 to 1999, never reported.",
+  "U.S. Court of Appeals for the Armed Forces", "DD08", "1973-09 to present", "A Defense Department subagency. Named the U.S. Court of Military Appeals through April 1996, renamed by an act of October 5, 1995 (108 Stat. 2831). Coded as both `a1_court` and `exec_branch`."
+) |>
+  tt(caption = "Article I court codes and their presence in the employment data",
+     width = c(0.3, 0.08, 0.22, 0.4)) |>
+  theme_latex(multipage = TRUE, rowhead = 1) |>
+  format_tt(escape = TRUE) |>
+  style_tt(fontsize = 0.8, align = "l")
+```
+
+### Coverage: Personnel
+
+In addition to excluding certain executive branch agencies, the data also exclude certain categories of personnel.
+
+- Census Bureau temporary workers
+  - Note: OPM's [data sources page](https://data.opm.gov/resources/data-sources) lists them among the excluded personnel. The data bear this out in both eras: the Census Bureau's headcount rises by roughly 5,000 to 10,000 around each decennial census (2000, 2010 and 2020), far short of the several hundred thousand temporary enumerators hired for each count, so the enumerators are not in the data. The FOIA release letters do not address them.
+- The Federal Bureau of Investigation (FBI) did not report data on personnel actions (dynamic data) until FY 2007, which began 2006-08-01.
+- Foreign Service personnel at the State Department
+  - Note: The State Department stopped providing data on Foreign Service Personnel in March 2006. The FOIA data never include Foreign Service Personnel in the State Department. OPM's prior data website, FedScope, included Foreign Service Personnel until March 2006.
+  - Note: The FOIA response letter and OPM data definitions explicitly mention Foreign Service personnel in the State Department, which suggests that Foreign Service personnel in other agencies are included.
+- Foreign Nationals Overseas
+- Public Health Service’s Commissioned Officer Corps
+- Non-appropriated fund employees
+
+## Coverage: Personnel Actions
+
+Personnel actions refer to accessions and separations in the dynamic data. The SI separation code denotes "Termination or Removal (Discipline/Performance)". This type of separation is omitted from FWD data. The SI separation type is included in the FOIA data.
+
+## Historical Coverage: Executive Office of the President
+
+The Executive Office of the President (EOP) is the group of agencies that directly support the President. Its staff work closest to the President and are at the center of policymaking in the executive branch, but OPM's data carry no designation for EOP agencies. FWOC therefore provides two indicators. `eop` takes the value 1 if the agency is a unit of the EOP on the date of the record. `core_eop` takes the value 1 for the major EOP agencies that are mainstays across presidential administrations. For example, the White House Office was created at the inception of the EOP in 1939 and has been an integral part of it ever since, while the Federal Property Council was established by executive order in 1973 and abolished in 1977. Both are coded as EOP; only the White House Office is core.
+
+The EOP is identified by agency code. The list of units was first assembled by the project author in 2025 from the Congressional Research Service report [*The Executive Office of the President: An Historical Overview*](https://crsreports.congress.gov/product/pdf/RL/98-606) (98-606), the EOP section of the *U.S. Government Manual*, and current and archived White House EOP pages. The 2026 revision kept that roster and redated it. Membership is now dated by the statute, executive order or reorganization plan that placed the unit in the EOP or removed it, checked against the Statutes at Large and the executive order index, so a record dated after a unit's formal end is coded 0 even where staff are still reported under the unit's code. Where no instrument marks a boundary, the start or end of OPM's code window is used. The membership table, `metadata/eop/eop_labels_fwoc.csv`, lists each unit with its period of membership.
+
+The `core_eop` indicator marks nine bodies designated as the EOP's durable policymaking units: the White House Office, the National Security Council, the Office of Management and Budget, the Council of Economic Advisers, the Council on Environmental Quality, the Office of Science and Technology Policy, the Office of National Drug Control Policy, the Office of the U.S. Trade Representative, and the domestic policy staff under its successive names (Domestic Council, Domestic Policy Staff, Office of Policy Development). The designation is a judgment, not a mechanical rule, and is applied at the code level, so a body is core under every name it has carried. The 2025 list treated the twelve units the *Manual* consistently lists as core; the 2026 revision narrowed it to the policymaking bodies, dropping the Office of Administration, the Office of the Vice President and the Intellectual Property Enforcement Coordinator.
+
+```{r}
+#| label: eop-units
+#| message: false
+# tinytable's own caption rather than Quarto's tbl-cap: Quarto puts a captioned
+# chunk table in a float, which a multipage table cannot occupy.
+library(readr)
+library(dplyr)
+library(tinytable)
+read_csv("metadata/eop/eop_labels_fwoc.csv", na = "",
+         col_types = cols(.default = "c", from = "D", through = "D")) |>
+  transmute(Code = eop_agency_code, Unit = eop_agency_name,
+            Core = if_else(core_eop == "1", "Yes", ""),
+            From = format(from, "%Y-%m-%d"),
+            Through = if_else(is.na(through), "present", format(through, "%Y-%m-%d"))) |>
+  tt(caption = "Units of the Executive Office of the President, with the period of membership used by the eop indicator",
+     width = c(0.08, 0.52, 0.08, 0.16, 0.16)) |>
+  theme_latex(multipage = TRUE, rowhead = 1) |>
+  format_tt(escape = TRUE) |>
+  style_tt(fontsize = 0.75, align = "l")
+```
+
+**Coverage is incomplete.** Not every EOP unit reports personnel data to OPM, so the indicators cannot produce a complete count of EOP staff. Three gaps matter most.
+
+- **The White House Office never appears.** No record under agency code WH, which covers the White House Office and the other units listed under it, exists in the data for any period. OPM's lookup table annotates these codes as units that do not make personnel submissions.
+- **Two units stop reporting.** The Office of the Vice President appears only through December 1976, and the Executive Residence only through September 2003. The domestic policy staff (Office of Policy Development) appears only through June 1998, so `core_eop` covers seven of the nine core bodies after that date.
+- **The observable EOP is small.** In September snapshots the observations with `eop = 1` number roughly 1,200, of which roughly 900 to 1,000 are core. The non-core remainder is dominated by the Office of Administration, which has reported since 1978.
+
+The units that report throughout the data are the Office of Management and Budget, the Council of Economic Advisers, the National Security Council, the Council on Environmental Quality and the Office of the U.S. Trade Representative (from the first snapshot in September 1973), with the Office of Science and Technology Policy from 1977, the Office of Administration from 1978, and the Office of National Drug Control Policy from 1989. Short-lived units of the 1970s appear for the few snapshots in which they existed.
+
+**Records after a unit's formal end.** Some codes carry records after the date on which the unit left the EOP or was abolished. These records have `eop = 0`, so filtering on the agency code gives a larger set than filtering on the indicator. The largest cases are the Office of Emergency Preparedness (OC), abolished 1973-07-01 but reported through December 1976; the Federal Energy Office (EG), abolished 1974-06-25 but reported through September 1974; the Office of Economic Opportunity (OE), wound down in January 1975 but reported through December 1976; and the Privacy and Civil Liberties Oversight Board (VD), an EOP unit from 2004 to 2008 whose records all date from November 2012 onward, after it became an independent agency.
+
+
+## Redactions
+
+OPM withholds duty station and, since 2005, pay for employees of the Department of Defense, employees of security agencies, and employees in sensitive occupations. The rules differ between the two sources that make up FWOC: the FOIA release that supplies the data before 2005, and OPM's Federal Workforce Data from 2005 on.
+
+- **2005 to present.** OPM's [Data Release Policy](https://www.opm.gov/policy-data-oversight/data-analysis-documentation/data-policy-guidance/data-standards/data-release-policy-december-2024.pdf) lists the security agencies and sensitive occupations and the fields withheld.
+- **1973 to 2004.** The [response letters](https://archive.org/details/opm-federal-employment-data) that accompanied the FOIA release describe what was masked.
+
+The table shows how each group of agencies is treated in the employment data.
+
+| Agencies | 1973--2004 | 2005--present |
+|---|---|---|
+| Department of Defense (Air Force, Army, Navy, other Defense) | Duty station masked for all employees; pay shown | Duty station and pay redacted for all employees |
+| FBI, DEA, ATF, TTB, Secret Service | Duty station masked, except that Washington-area employees are reported in the District of Columbia; pay shown | Duty station and pay redacted, except that Washington-area employees are reported in the District of Columbia with pay shown |
+| U.S. Mint | Treated like the security agencies in the row above | Sensitive occupations only |
+| Customs and Border Protection, Immigration and Customs Enforcement, U.S. Attorneys' Offices | Duty station masked for most, but not all, employees; pay shown | Treated like the security agencies in the row above |
+| All other agencies | Duty station masked for sensitive occupations; pay shown | Duty station and pay redacted for sensitive occupations |
+
+Four points follow from the table.
+
+- Pay is not redacted for any agency before 2005. From 2005, pay is redacted wherever duty station is redacted.
+- Counts by location and statistics on pay are not comparable across 2004 and 2005 for the agencies whose treatment changes: the Department of Defense (pay), the U.S. Mint, Customs and Border Protection, Immigration and Customs Enforcement, and U.S. Attorneys' Offices.
+- Because Washington-area employees of security agencies are reported in the District of Columbia, employment is overstated for the District and understated for Maryland, Virginia and West Virginia. See the next section.
+- OPM's policy lists the Bureau of Prisons as a security agency, but in the data only its sensitive occupations are redacted.
+
+Redaction affects every duty station variable and, where they are present, the statistical area and locality pay variables. The `Sentinel Codes` column in the FWOC codebook lists the placeholder values that mark a redaction in each variable (for example `REDACTED` from 2005 and `#########` before).
+
+This section describes the employment data. Redaction in the accessions and separations data has not been examined in the same way.
+
+## Overstatement of Employment in the District of Columbia
+
+For employees of the security agencies, OPM replaces a duty station in the Washington metropolitan area with the District of Columbia. The rule is stated in OPM's [Data Release Policy](https://www.opm.gov/policy-data-oversight/data-analysis-documentation/data-policy-guidance/data-standards/data-release-policy-december-2024.pdf) of December 2024:
+
+> For employees of a security agency, with a duty station in the Washington Core Based Statistical Area (CBSA), duty station location will be listed as "Washington, D.C."
+
+The Washington Core Based Statistical Area includes counties in Maryland, Virginia and West Virginia, so the data overstate federal employment in the District and understate it in those three states. The agencies affected are the FBI, the Drug Enforcement Administration, the Bureau of Alcohol, Tobacco, Firearms and Explosives, the Alcohol and Tobacco Tax and Trade Bureau, the Secret Service, Customs and Border Protection and Immigration and Customs Enforcement. In the data from 2005 on, every employee of these agencies is reported either in the District of Columbia or as REDACTED; none is reported in Maryland, Virginia or West Virginia. In the September 2025 snapshot about 14,200 of their employees are reported in the District. Before 2005 the same agencies' employees outside the District have a missing duty station rather than the REDACTED code, and Customs and Border Protection and Immigration and Customs Enforcement were not yet masked. Employees of the U.S. Mint have their true duty stations; only its sensitive occupations are redacted.
+
+
+## Data Quality Notes
+
+### Length of service in recent accession and separation data
+
+A subset of accession and separation records carries an unusually large `length_of_service_years` value that tracks the snapshot year — for example, 122 in 2022, 123 in 2023, 124 in 2024, and 125 in 2025. The affected counts are small in 2022–2023 and grow to several thousand actions per year in 2024–2025; the employment data are not affected.
+
+These values come directly from OPM's published data. FWOC reports `length_of_service_years` exactly as received and does not recalculate it. We do not know why OPM reports these values. Each one equals the snapshot year minus 1900, which is consistent with a 1900-based reference date entering OPM's length-of-service calculation for these records; we have not confirmed this and offer it only as a possible explanation. The affected records otherwise carry an ordinary, recent service computation (leave) date, so the large value is not explained by a missing date in the data FWOC observes.
+
+Researchers analyzing length of service should be aware that these records may not reflect actual tenure, and may wish to exclude `length_of_service_years` values near the snapshot-year-minus-1900 boundary from quantitative summaries.
+
+### Annualized basic pay for intermittent and rate-based appointments
+
+`annualized_adjusted_basic_pay` expresses each employee's adjusted basic pay as a full-year amount. For employees paid a rate — hourly, daily, piece-rate, or term — rather than an annual salary, and who work intermittently or for only part of the year, annualizing that rate over-states what the person actually earned. These appointments include experts and consultants hired under 5 U.S.C. 3109, administratively-determined (AD) rate positions, Federal Wage System (hourly and piece-rate) workers, and teaching positions; most carry a grade of `00`.
+
+In the data this appears as a small number of very high annualized-pay values — roughly 600 observations above \$1 million in 2024 dollars, concentrated in 1986–1987 with a scattered later tail. These should not be read as actual annual earnings.
+
+A much smaller group — about two dozen observations — carries values far larger than annualization alone can produce, reaching into the hundreds of millions of dollars. These appear to be errors in the source data. FWOC reports adjusted basic pay as received and does not correct or cap it, so researchers should treat extreme pay values with caution and consider excluding them from quantitative summaries.
+
+### Breaks in agency and subagency series
+
+The data include many breaks in agency and subagency series. Some are due to well-known legal changes in form, for example the division of the Department of Health, Education, and Welfare into the Departments of Education and Health and Human Services in 1980, or the creation of the Department of Homeland Security in 2003. Others are less well known. Two examples:
+
+- **Military medical facilities moved to the Defense Health Agency in 2022.** Under 10 U.S.C. 1073c, added by the FY2017 National Defense Authorization Act (Public Law 114-328, section 702), the Defense Health Agency took over the administration of the military medical treatment facilities. The civilian staff of those facilities were moved from the Army, Navy and Air Force to the Agency between July and September 2022: about 45,000 employees, including 27,000 from the U.S. Army Medical Command (ARMC) alone. The code "Military Treatment Facilities under DHA" (DD83) rose from 7,500 to 45,600 and the three military departments' series fell by as much, while the Department of Defense total did not change.
+- **The Surface Transportation Board left the Department of Transportation.** The Surface Transportation Board Reauthorization Act of 2015 (Public Law 114-110) made the Board an independent agency in December 2015. In OPM's data its roughly 120 employees stayed under a Department of Transportation code (TD15) until July 2019 and appear under the Board's own code (TW00) from August 2019, three and a half years after the law took effect. Both the move and the lag are typical.
+
+These organizational changes are often not visible in the names. A code can keep the same name while the reporting unit under it changes, and a code's name can change while the reporting unit stays the same. The FWOC names recode OPM's labels in a small number of documented cases, described in the Codebook, but a stable name is not evidence of a stable underlying organization.
+
+Until the ongoing FWOC work to identify these structural breaks is released, researchers analyzing an agency or subagency over time should:
+
+- Inspect the agency and subagency time series for abrupt changes in level before interpreting a trend.
+- Where an abrupt change appears, look for documentary evidence of a formal reorganization and look at the other codes of the same department in the same period for evidence of internal reorganizations.
+
+# Executive Department Reporting and Major Executive Department Reorganizations
+
+### Subagencies in the Department of Energy and the Department of State
+
+The Department of State has reported no subagencies since September 1985 - every record since then carries the department-level code ST00. Before that, the data distinguish only two units from the department itself: (1) the Agency for International Development (ST02), from the first snapshot in September 1973 through March 1980, after which USAID reports under its own agency code (AM), and (2) the International Boundary and Water Commission (ST03), through December 1985. The remaining records in those years carry a code for the department itself (ST01, "State, Regular" and later "Department of State").
+
+The Department of Energy, which first appears in December 1977, reported no subagencies before August 2011. Since August 31, 2011 it reports one, the Federal Energy Regulatory Commission (DNFE), about 10 percent of the department's records. All other records carry the department-level code DN00.
+
+### Creation of the Department of Education and the Department of Health and Human Services
+
+This section details agencies affected by the creation of the Department of Education and redesignation of the Department of Health, Education, and Welfare as the Department of Health and Human Services.
+
+[The Department of Education Organization Act (Public Law 96-88) of October 17, 1979](https://www.govinfo.gov/content/pkg/STATUTE-93/pdf/STATUTE-93-Pg668.pdf) created the Department of Education including transfers of agencies and functions from:
+
+- The Department of Health, Education, and Welfare
+- The Department of Defense
+- The National Science Foundation
+- The Department of Justice
+- The Department of Housing and Urban Development
+
+The Department of Health, Education, and Welfare was renamed the Department of Health and Human Services by the same law. Accordingly, the HE agency code - which was labeled "DEPARTMENT OF HEALTH, EDUCATION, AND WELFARE" from 06/01/1972 through 04/30/1980 - was relabeled "DEPARTMENT OF HEALTH AND HUMAN SERVICES" on 05/01/1980.
+
+### Creation of the Department of Homeland Security
+
+This section details agencies affected by the creation of the Department of Homeland Security. 
+
+OPM has agency code HS labeled DEPARTMENT OF HOMELAND SECURITY with subagency code HS00 labeled OFFICE OF HOMELAND SECURITY from 09/01/2001 to 09/30/2001. The Office of Homeland Security in the EOP was created by EO 13228 as of October 8, 2001 and became dormant due to lack of appropriations in FY 2005. While codes existed for the Office of Homeland Security it appears that no personnel data were ever delivered to OPM. 
+
+The Department of Homeland Security was created by the Homeland Security Act of 2002 (Public Law 107-296), effective November 25, 2002. The HS agency codes is labeled DEPARTMENT OF HOMELAND SECURITY beginning 01/01/2003 coinciding with the creation of subagency codes for the subcomponents of the Department of Homeland Security.
+
+The HS agency code is not in the data before the first quarter of 2003. 
+
+The [Homeland Security Act of 2002 (Public Law 107-296) of November 25, 2002](https://www.govinfo.gov/content/pkg/PLAW-107publ296/pdf/PLAW-107publ296.pdf) created the Department of Homeland Security by [combining all or part of 22 different federal agencies](https://www.dhs.gov/who-joined-dhs).
+
+- Department of the Treasury
+  - The U.S. Customs Service (TRAF)
+  - U.S. Secret Service (TRAC)
+  
+- Department of Justice
+  - The Immigration and Naturalization Service (DJ04)
+  - Office for Domestic Preparedness
+  - Domestic Emergency Support Teams
+  - Parts of the Federal Bureau of Investigation (DJ02)
+    - National Infrastructure Protection Center
+    - National Domestic Preparedness Office
+
+- Department of Transportation
+  - The Transportation Security Administration (TD19)
+  - U.S. Coast Guard (TD02)
+
+- Department of Energy (the Department of Energy does not report data for subagencies)
+  - Nuclear Incident Response Team
+  - CBRN Countermeasures Programs
+  - Environmental Measurements Laboratory
+  - Energy Security and Assurance Program
+
+- Department of Agriculture
+  - Part of the Animal Plant Health Inspection Service (AG34)
+  - Plum Island Animal Disease Center
+  
+- Department of Defense
+  - National BW Defense Analysis Center
+  - National Communications System
+
+- Department of Health and Human Services
+  - Strategic National Stockpile and the National Disaster Medical System
+  
+- Independent Agencies
+  - The Federal Emergency Management Agency (EM)
+  - Parts of the General Services Administration (GS)
+    - Federal Computer Incident Response Center
+    - The Federal Protective Service
+    
+# AI Disclosure
+
+The FWOC is built on the foundation laid by a prior curated dataset based on OPM's FedScope data, which was wholly human created: the project author wrote its pipeline, codebook, user guide and quick start guide with assistance from Dr. Benjamin Reese, and the current versions revise and extend that work. The Executive Office of the President indicators likewise began as a human coding by the project author in 2025, which the 2026 revision redated and narrowed. Anthropic's Claude models are used to develop and maintain the FWOC. The AI assisted in writing and proofing the code of the pipeline that builds the curated data, in researching the agency and subagency names and the Executive Office membership described in the Codebook and in this guide, and in drafting and proofing the user documents, including this guide. The project author defines each task, decides every question of judgment, and reviews the results, though not every source document the AI read; that verification is ongoing. Every line of code was reviewed by the project author before it was committed. The code that builds FWOC, the lookup tables it uses, and the source of this guide are public in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC).
