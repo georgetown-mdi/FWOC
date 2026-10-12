@@ -255,6 +255,51 @@ apply_overlap_resolutions <- function(d, lookup_name, resolutions) {
     select(-.keeper)
 }
 
+# Re-attach master rows that a later OPM download withdrew. OPM's 2026-10 download
+# of the agency_subelement table dropped rows of two kinds: the latest closed
+# window of twenty subelement codes (e.g. TD11 2005-02-01..2014-02-28), leaving
+# about 285,000 employment rows with no label, and one row of each of six
+# overlapping pairs that overlap_resolutions.csv had already chosen between, in
+# four cases keeping the variant the resolution rejects (e.g. DD23 "OFFICE OF
+# ECONOMICS ADJUSTMENT"). OPM's own FWD data files still carry the dropped labels.
+# Such rows are kept in metadata/code_tables/withdrawn_rows.csv with the download
+# they were last seen in and the evidence for keeping them, and this appends the
+# rows recorded for `table_name` to the freshly read master `d`.
+#
+# It runs before normalization, overlap resolution and the overlap guard, so a
+# restored row is treated exactly as it was while OPM still published it: a
+# restored half of a pair is chosen between by the same resolution as before, and
+# a row OPM later reinstates word for word collapses with the OPM row in the
+# distinct() step. A reinstatement under a different label surfaces as an overlap
+# in assert_no_label_overlaps(), whose listing shows both rows.
+apply_withdrawn_rows <- function(d, table_name, withdrawn) {
+  w <- withdrawn |> filter(table == table_name)
+  # if no withdrawn rows for this table, return the table without adding rows
+  if (!nrow(w)) {
+    return(d)
+  }
+  # keep the four code-table columns and type the dates to match the OPM master
+  w <- w |>
+    transmute(code, label,
+      date_from = as.Date(date_from), date_to = as.Date(date_to)
+    )
+
+  # get withdrawn rows that match a row in the current code table on all four
+  # columns: OPM has restored these rows word for word, so they are harmless but
+  # stale and can be removed from withdrawn_rows.csv. Say so without stopping the
+  # build. distinct() in clean_and_guard() collapses the duplicate.
+  back <- semi_join(w, d, by = c("code", "label", "date_from", "date_to"))
+  if (nrow(back)) {
+    message(
+      table_name, ": ", nrow(back), " withdrawn row(s) are back in the OPM ",
+      "master and can be removed from withdrawn_rows.csv, e.g. ", back$code[1],
+      " ", back$date_from[1], "..", back$date_to[1]
+    )
+  }
+
+  bind_rows(d, w)
+}
+
 # Build-time hard-fail guard: stop() with a full listing if any code in `d` has
 # overlapping windows. Called by the generator after normalization + resolutions.
 assert_no_label_overlaps <- function(d, name) {

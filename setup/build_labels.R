@@ -43,6 +43,13 @@ resolutions <- read_csv(paste0(path, "overlap_resolutions.csv"),
   col_types = cols(.default = "c"), na = ""
 )
 
+# Master rows a later OPM download withdrew that FWOC keeps, with their evidence.
+# Appended to the master by apply_withdrawn_rows() (utils/code_table_functions.R)
+# before any label is derived from it.
+withdrawn <- read_csv(paste0(path, "withdrawn_rows.csv"),
+  col_types = cols(.default = "c"), na = ""
+)
+
 # normalize (agency/subagency cosmetic variants) -> collapse exact duplicates ->
 # apply resolutions -> hard-fail guard. Returns the cleaned table; stop()s if any
 # overlap survives.
@@ -66,6 +73,7 @@ clean_and_guard <- function(d, lookup_name, normalize = FALSE) {
 
 ct_agy <- find_code_table(path, "agency_subelement")
 sub <- read_code_table(file_path = ct_agy$file, download_date = ct_agy$download_date)
+sub <- apply_withdrawn_rows(sub, "agency_subelement", withdrawn)
 
 agy_map <- sub |>
   filter(str_length(code) == 2 | str_detect(code, "00$")) |>
