@@ -3,7 +3,7 @@
 #          columns to FWD conventions, and write BZ data to the final hives
 #          (emp_hive, acc_hive, sep_hive).
 #          Runs after 06, which adds the country/county/city labels renamed
-#          below, and after 04, which supplies the FWD state lookup.
+#          below.
 
 library(arrow)
 library(dplyr)
@@ -28,28 +28,30 @@ st_terr <- ds_ref |>
   filter(Country == "UNITED STATES") |>
   distinct(country_code)
 
-rm(ds_ref)
+# State name -> abbreviation -> FIPS lookup (50 states + DC). The FIPS code and
+# the name come from the DutyStations table: the first two characters of a US
+# station code are the state FIPS (territories carry an alphabetic pair and drop
+# out of the digit filter). The USPS abbreviation is not in that table, so it
+# comes from base R's state.name / state.abb constants plus a row for DC. Both
+# sources are frozen, so this needs no data scan.
+usps <- tibble(
+  duty_station_state              = str_to_upper(c(state.name, "District of Columbia")),
+  duty_station_state_abbreviation = c(state.abb, "DC")
+)
 
-# Build state name -> abbreviation lookup from FWD data. 2010 is the first year
-# with no missing state / abbreviation, and duty_station_state_code is NA from
-# 2015 on, so 2010-2014 is the whole usable window -- later years contribute
-# nothing and scanning them only costs time.
-state_lookup <- open_dataset("data_opm_gov/fwd_emp_hive",
-                             partitioning = c("year", "month"),
-                             unify_schemas = TRUE) |>
-  filter(year >= 2010, year <= 2014) |>
-  select(contains("duty_station")) |>
-  distinct() |>
-  collect() |>
-  filter(!is.na(duty_station_state_abbreviation) &
-         !is.na(duty_station_state_code) &
-         duty_station_country_code == "US") |>
+state_lookup <- ds_ref |>
+  mutate(country_code = str_sub(Code, start = 1, end = 2)) |>
+  filter(Country == "UNITED STATES",
+         str_detect(country_code, "^[:digit:][:digit:]$")) |>
+  distinct(country_code, duty_station_state = State) |>
+  inner_join(usps, by = "duty_station_state") |>
+  mutate(duty_station_state_code = country_code) |>
   select(duty_station_state,
          duty_station_state_abbreviation,
-         duty_station_state_code) |>
-  distinct() |>
-  filter(str_detect(duty_station_state_code, "[:digit:][:digit:]")) |>
-  mutate(country_code = duty_station_state_code)
+         duty_station_state_code,
+         country_code)
+
+rm(ds_ref, usps)
 
 # Assert the lookup still covers 50 states + DC -- by count and
 # by identity, because neither alone is enough. The count is fixed at 50 states plus

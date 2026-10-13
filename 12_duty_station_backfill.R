@@ -8,8 +8,8 @@
 #                                     states, NA for non-US and territories.
 #                                     This removes the country code leak (OPM
 #                                     puts territory and country codes here) and
-#                                     repairs 2015+, where the column is absent
-#                                     from the current file version and so
+#                                     repairs 2010+, where the column is absent
+#                                     from the current file versions and so
 #                                     arrives here entirely NULL
 #   duty_station_state              - NA for non-US and territories (FWD wrote
 #                                     "NO DATA REPORTED", BZ wrote NA; this is
@@ -29,11 +29,11 @@
 # survive the backfill rather than being nulled with the non-US rows.
 #
 # duty_station_city is the exception, and not because anything is discarded:
-# OPM did not publish the column at all before 2015, so those years arrive
+# OPM did not publish the column at all before 2010, so those years arrive
 # entirely NULL and hold no REDACTED token to preserve. The backfill only adds
 # city values (from the DutyStations lookup, where duty_station_code matches);
 # it never nulls one. Rows that are redacted in unpublished OPM data therefore
-# end up NA rather than REDACTED before 2015 -- an absence in the source,
+# end up NA rather than REDACTED before 2010 -- an absence in the source,
 # not a choice made here. Documented in the codebook.
 
 library(arrow)
@@ -194,14 +194,14 @@ harmonize_duty_station <- function(data) {
     left_join(terr_cw, by = c("ds_code_prefix" = "q_code"),
               na_matches = "never") |>
     mutate(
-      # duty_station_state_code is 100% null for 2015+ in FWD while
-      # duty_station_state is populated for 2015+. The column is not missing
+      # duty_station_state_code is 100% null for 2010+ in FWD while
+      # duty_station_state is populated for 2010+. The column is not missing
       # from all versions of OPM's data: OPM publishes several file versions
       # per month, script 04 reads the current (highest) one, and from
-      # 2015-01 that version dropped the column while superseded versions
+      # 2010-01 that version dropped the column while superseded versions
       # still carry it. Therefore, we populate the code with REDACTED when
       # the name is REDACTED to populate periods when the code is
-      # structurally missing. The branch is not year-scoped: pre-2015 it
+      # structurally missing. The branch is not year-scoped: pre-2010 it
       # reproduces the value the source already carried, so it is a no-op
       # there.
       duty_station_state_code = case_when(
