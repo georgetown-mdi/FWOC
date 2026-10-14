@@ -1,8 +1,7 @@
 
 ---
 title: "Federal Workforce OpenCommons Codebook"
-subtitle: "Data as of July 2026 (built 2026-10-07)"
-date: 2026-10-06
+subtitle: "Data as of August 2026 (built 2026-10-14)"
 date-format: "long"
 format:
   pdf:
@@ -167,7 +166,7 @@ We recoded `r scope$display_changes` name changes under this rule. Where an agen
 - the [*U.S. Government Manual*](https://www.govinfo.gov/app/collection/govman), every edition from 1972 through 2025, as GPO's PDFs through 2009 and XML from 2011;
 - the Federal Register's [index of executive orders](https://www.federalregister.gov/presidential-documents/executive-orders), from EO 7532 of January 8, 1937 onward, with the text of orders from federalregister.gov. Government publication of executive orders begins with the *Federal Register* itself, whose first order is EO 7316 of March 13, 1936, and federalregister.gov's index begins with EO 7532. One order before those dates was needed, EO 6917 of December 11, 1934, which created Federal Prison Industries, Inc.; its text was taken from the [American Presidency Project](https://www.presidency.ucsb.edu/documents/executive-order-6917-creating-body-corporate-be-known-federal-prison-industries-inc) at the University of California, Santa Barbara, after a `.gov` source (bop.gov) had named and dated the order;
 - departmental orders and directives published on agencies' own `.gov` sites, archived as retrieved;
-- OPM's own [agency and subelement table](https://data.opm.gov/data-standards/agency-subelement), in the May and September 2026 downloads.
+- OPM's own [agency and subelement table](https://data.opm.gov/data-standards/agency-subelement), in the May, September, and October 2026 downloads.
 
 Machine-readable text matters for this work: a passage can be searched exactly and quoted verbatim, a citation can be checked against the file it names, and a search that finds nothing can be stated together with what was searched. The weakest part of the corpus is the *Federal Register* before 1994, where the text is optical character recognition of scanned pages; searches there were run with alternative spellings and a control term known to appear, the phrase "Federal Register" in each page's running header, so that an issue whose text had not been read could be told apart from one in which the name was absent.
 
@@ -176,6 +175,8 @@ Candidate changes were researched against this corpus by Claude agents (Fable 5.
 **What the rule leaves alone.** A rename of an agency by law, executive action, or departmental order is left as OPM displays it. So is any name change that could not be shown to be purely administrative based on the evidence above. A series grouped by `agency_fwoc` or `agency_subelement_fwoc` therefore still breaks at such a change, as it does in OPM's own data, and the records before and after it may or may not describe the same agency. The recodes under item 4 above are designed to eliminate name changes only where there is strong evidence that the organization is comparable on either side of the name change. Identifying structural breaks in agencies' time series, whether or not they coincide with a name change, is an area of ongoing development at FWOC.
 
 **Dates are OPM's.** Each row of the FWOC lookup files begins and ends where OPM's table changes the name, even where a document shows that a legal change took effect earlier or later. The one exception is the 1980-05-04 boundary for the Office of the Secretary of Health and Human Services. Aligning name changes with the date of legal changes is a planned improvement for the FWOC names.
+
+**Rows OPM has withdrawn.** OPM's current table omits some historical rows that earlier downloads carried and that OPM's own data files still use, for example TD11 ("Research and Innovative Technology Administration") for 2005-02-01 to 2014-02-28 and AF17 ("AF Installation and Mission Support") for 2014-05-01 to 2022-04-30. FWOC keeps these rows, listed with the download each was last seen in and the evidence for keeping it in `metadata/code_tables/withdrawn_rows.csv`, so `agency_subelement` and `agency_subelement_fwoc` remain populated for the periods now missing in OPM's lookup table. The list currently holds 24 rows for 18 subagency codes.
 
 ## Breaks in agency and subagency series
 
@@ -195,7 +196,7 @@ The same note appears in the Data Quality Notes of the User Guide.
 
 ## How FWOC names differ from OPM's display
 
-The tables below list every row of the two FWOC lookup files whose name differs from a name OPM displayed for the code during the row's period. Where OPM displayed more than one differing name in the period, the names are separated by `|`. The dates are those of the FWOC row, which can be longer than the period in which OPM's name differed. An end date of 2026-09-05 is the date OPM's lookup table was downloaded. The military departments (change 1) do not appear, because their names are OPM's own. The Reason column refers to the other changes in the list at the start of this section:
+The tables below list every row of the two FWOC lookup files whose name differs from a name OPM displayed for the code during the row's period. Where OPM displayed more than one differing name in the period, the names are separated by `|`. The dates are those of the FWOC row, which can be longer than the period in which OPM's name differed. An end date equal to the download date of OPM's lookup table (2026-10-12 for this edition) means the name is current. The military departments (change 1) do not appear, because their names are OPM's own. The Reason column refers to the other changes in the list at the start of this section:
 
 - **Label shows the reporting unit:** change 2.
 - **Office of the Secretary, standardized:** change 3.
