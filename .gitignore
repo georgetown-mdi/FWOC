@@ -179,10 +179,9 @@ metadata/eop/eop_coding_source
 metadata/bls/raw/
 # redaction matrices -- validation/redaction_check.R
 metadata/validation/*.parquet
-# NA inventory reports -- buildInventory(), regenerated every run
-# metadata/na_treatment/checks/ is deliberately NOT ignored: it is the only
-# committed record of label-gap results, and its monthly diff is the signal.
-metadata/na_treatment/inventory/
+# NA inventory and label-gap check reports -- validation/02_labels.R, regenerated
+# every run; the committed record of accepted gaps is the ex2 allowlists
+metadata/na_treatment/
 # per-variable inspection CSVs -- codebook/01_codebook_inspection.R
 metadata/codebook/inspection/
 # coverage-gap detail -- rewritten by codebook/02_codebook_build.R every run and
@@ -223,3 +222,6 @@ docs/fwoc_agency_subagency_labels/
 # when the tests are published.
 tests/
 .github/
+
+# Claude Code session worktrees and settings
+.claude/
