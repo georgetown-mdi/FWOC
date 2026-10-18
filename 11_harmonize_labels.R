@@ -198,21 +198,50 @@ join_code_labels <- function(data, lbls, date_var) {
 # with a full-time work schedule.
 nsftp_appt_codes <- c("10", "15", "30", "32", "34", "35", "36", "38", "50", "55", "67")
 
+# OPM's "not specified" sentinels for appointment_type_code (both) and
+# work_schedule_code (*). A row carrying one is unknown, not a known
+# non-member, and is treated below exactly like a missing code.
+not_specified_codes <- c("*", "**")
+
 # The three era-harmonizations that apply to all three hives.
 #   age_bracket:           BZ is title case, FWD upper case.
 #   length_of_service_ord: BZ spells its missing value UNSP, expanded here.
 #                          FWD leaves it NULL (see 08).
 #   nsftp_indicator_fwoc:  derived for every period, which fills the gap where
 #                          OPM published no nsftp_indicator (2005-03 to 2009-12).
+#                          Two conditions must both hold: a full-time schedule
+#                          (F) and a permanent appointment type. 1 when both
+#                          hold, 0 when either fails (one failing condition is
+#                          enough even if the other code is unknown), NULL when
+#                          both codes are unknown or one condition holds and the
+#                          other code is unknown. Unknown = missing or OPM's
+#                          not-specified sentinel. %in% never returns NULL, so
+#                          each test is wrapped to yield NULL for an unknown
+#                          code, and & then propagates it (TRUE & NULL = NULL,
+#                          FALSE & NULL = FALSE). Unwrapped, an unknown
+#                          appointment type would score a definite 0, which
+#                          OPM's ** sentinel makes common before 1986.
 add_harmonized_cols <- function(data) {
   mutate(data,
     age_bracket           = str_to_upper(age_bracket),
     length_of_service_ord = if_else(length_of_service_ord == "UNSP",
                                     "UNSPECIFIED", length_of_service_ord),
-    nsftp_indicator_fwoc  = if_else(appointment_type_code %in% nsftp_appt_codes &
-                                      work_schedule_code == "F", 1, 0),
+    appt_permanent        = if_else(
+      is.na(appointment_type_code) |
+        appointment_type_code %in% not_specified_codes,
+      NA,
+      appointment_type_code %in% nsftp_appt_codes
+    ),
+    sched_full_time       = if_else(
+      is.na(work_schedule_code) |
+        work_schedule_code %in% not_specified_codes,
+      NA,
+      work_schedule_code == "F"
+    ),
+    nsftp_indicator_fwoc  = if_else(appt_permanent & sched_full_time, 1, 0),
     nsftp_indicator_fwoc  = cast(nsftp_indicator_fwoc, int8())
-  )
+  ) |>
+    select(-appt_permanent, -sched_full_time)
 }
 
 # The columns this script writes. Dropped before the joins in each block so a
