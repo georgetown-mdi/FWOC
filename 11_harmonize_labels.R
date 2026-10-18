@@ -226,12 +226,16 @@ add_harmonized_cols <- function(data) {
     age_bracket           = str_to_upper(age_bracket),
     length_of_service_ord = if_else(length_of_service_ord == "UNSP",
                                     "UNSPECIFIED", length_of_service_ord),
+    # NA if appointment_type_code is NA or a not-specified sentinel, TRUE if
+    # appointment_type_code is a permanent code, FALSE if not a permanent code
     appt_permanent        = if_else(
       is.na(appointment_type_code) |
         appointment_type_code %in% not_specified_codes,
       NA,
       appointment_type_code %in% nsftp_appt_codes
     ),
+    # NA if work_schedule_code is NA or a not-specified sentinel, TRUE if F,
+    # FALSE if not F
     sched_full_time       = if_else(
       is.na(work_schedule_code) |
         work_schedule_code %in% not_specified_codes,
