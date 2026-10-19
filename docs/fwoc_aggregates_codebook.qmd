@@ -20,27 +20,27 @@ editor:
 
 # How to Read this Codebook
 
-This codebook documents the aggregate tables published alongside the Federal Workforce OpenCommons (FWOC) microdata. The tables are per-period counts built from the FWOC employment, accessions and separations data. They are the microdata summed up, nothing more: no lagging and no ratios, and a filter to the executive branch only where this codebook says so. They exist so that common questions can be answered without downloading the microdata.
+This codebook documents the agency-level counts published alongside the Federal Workforce OpenCommons (FWOC) individual-level data. The tables are per-period counts built from the FWOC employment, accessions and separations data.
 
-**Files** lists each table and what one row represents. **Periods** and **Agencies and Subagencies** explain the row keys. **Indicator Columns** and **Count Columns** define every other column. **Unknown Codes** explains how a missing or unreported code in the microdata affects the counts. **Using the Tables** covers ratios, joins between tables and the overlap among appointee categories. Variable definitions for the underlying microdata, including every code referred to here, are in the [FWOC Codebook](https://github.com/georgetown-mdi/FWOC). The scripts that build the tables are in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC) under `aggregate/r2/`.
+**Files** lists each CSV file, source data, and the level of aggregation. **Periods** and **Agencies and Subagencies** explain time grain and how agency and subagencies code-name pairs behave over time. **Indicator Columns** and **Count Columns** define every other column. **Unknown Codes** explains how a missing or unreported code in the source data affects the counts. **Using the Tables** covers ratios, joins between tables and the overlap among appointee categories. Variable definitions for the individual-level data, including every code referred to here, are in the [FWOC Codebook](https://github.com/georgetown-mdi/FWOC). The scripts that build the tables are in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC) under `aggregate/r2/`.
 
-All files are plain CSV with a header row. An empty cell is a missing value.
+All files are plain CSV with a header row. An empty cell is a missing value. Empty cells occur only in code, label and indicator columns, never in a count. **Agencies and Subagencies** explains when they occur.
 
 # Files
 
-| File | Source data | One row per |
+| File | Source data | Level of aggregation |
 |---|---|---|
-| `emp_counts_gov.csv` | employment | period, executive branch |
-| `emp_counts_agency.csv` | employment | period and agency |
-| `emp_counts_subagency.csv` | employment | period and subagency |
-| `acc_counts_gov.csv` | accessions | period, executive branch |
-| `acc_counts_agency.csv` | accessions | period and agency |
-| `acc_counts_subagency.csv` | accessions | period and subagency |
-| `sep_counts_gov.csv` | separations | period, executive branch |
-| `sep_counts_agency.csv` | separations | period and agency |
-| `sep_counts_subagency.csv` | separations | period and subagency |
-| `politicization_agency.csv` | employment | period and agency, executive branch |
-| `politicization_subagency.csv` | employment | period and subagency, executive branch |
+| `emp_counts_gov.csv` | employment | executive branch total |
+| `emp_counts_agency.csv` | employment | agency, all branches |
+| `emp_counts_subagency.csv` | employment | subagency, all branches |
+| `acc_counts_gov.csv` | accessions | executive branch total |
+| `acc_counts_agency.csv` | accessions | agency, all branches |
+| `acc_counts_subagency.csv` | accessions | subagency, all branches |
+| `sep_counts_gov.csv` | separations | executive branch total |
+| `sep_counts_agency.csv` | separations | agency, all branches |
+| `sep_counts_subagency.csv` | separations | subagency, all branches |
+| `politicization_agency.csv` | employment | agency, executive branch only |
+| `politicization_subagency.csv` | employment | subagency, executive branch only |
 
 : Aggregate tables {#tbl-files tbl-colwidths="[36,20,44]"}
 
@@ -68,7 +68,15 @@ Units are the FWOC agency and subagency codes and labels. Under the FWOC codes t
 
 Labels change over time. A unit keeps one code but may carry different labels in different periods, so group on the code, not the label, when following a unit through time.
 
-Rows whose agency could not be assigned a FWOC code appear with an empty code and label. They are included in the agency and subagency counts files so that those files sum to the microdata.
+Most agencies report as a single unit. In the subagency files such an agency has one subagency row per period, with a code ending in `00` and the agency's own name as the subagency name. These rows are kept so that the subagency files cover every agency and sum to the agency files. An agency can move between one and several subagencies over time as OPM's reporting structure changes.
+
+Some code cells and some label cells are empty. The cases are:
+
+- A subagency code ending in `**`, such as `VA**`, is OPM's own code for records whose agency was reported but whose subagency was not. There is no label for it, so the label cell is empty. Several such codes run to the present.
+- A code with no label in a period is a real code that falls outside the dates of OPM's label for it, usually because the label window has closed or has not yet opened. Most of these codes carry a label in other periods.
+- Rows whose agency could not be assigned a FWOC code have an empty agency code and label, and empty indicator columns.
+
+All three kinds of row are kept so that the agency and subagency counts files sum to the individual-level data. Nothing is ever empty in a count column.
 
 | Column | Type | Files | Definition |
 |---|---|---|---|
@@ -81,7 +89,7 @@ Rows whose agency could not be assigned a FWOC code appear with an empty code an
 
 # Indicator Columns
 
-The agency and subagency counts files carry six descriptor columns taken from the microdata. All are 0/1 integers, empty where the agency code is missing. Each is a property of the agency in that period, so it does not split a unit's row.
+The agency and subagency counts files carry six descriptor columns taken from the individual-level data. All are 0/1 integers, empty where the agency code is missing. Each is a property of the agency in that period, so it does not split a unit's row.
 
 | Column | Definition |
 |---|---|
@@ -130,7 +138,7 @@ The politicization files start in 1982, when appointment type codes become avail
 
 # Unknown Codes
 
-A code in the microdata is unknown when it is missing or when OPM reports it as not specified, which OPM marks with `*` or `**`. Every count other than `n_all` is a count of records that definitely meet a condition, so a record never contributes on the strength of an unknown code.
+A code in the individual-level data is unknown when it is missing or when OPM reports it as not specified, which OPM marks with `*` or `**`. Every count other than `n_all` is a count of records that definitely meet a condition, so a record never contributes on the strength of an unknown code.
 
 For the single-code counts, PAS, Schedule C, noncareer SES, managers and career SES, a record counts when its reported code matches and does not count otherwise.
 
