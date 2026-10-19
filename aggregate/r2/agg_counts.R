@@ -27,13 +27,17 @@ library(readr)
 out_dir <- "export/aggregates"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-# The column dictionary for every file in export/aggregates/, published beside
-# them. It is versioned here and copied, since export/ is not in git.
-invisible(file.copy(
-  "aggregate/r2/aggregates_README.md",
-  file.path(out_dir, "README.md"),
-  overwrite = TRUE
-))
+# The codebook for every file in export/aggregates/, published beside them. It
+# is rendered by hand from docs/fwoc_aggregates_codebook.qmd (the PDF is not in
+# git), so stop if it is absent rather than publish the tables undocumented.
+codebook_pdf <- "docs/fwoc_aggregates_codebook.pdf"
+if (!file.exists(codebook_pdf)) {
+  stop(
+    codebook_pdf, " not found. Render it first, from the repo root:\n",
+    "  quarto render docs/fwoc_aggregates_codebook.qmd"
+  )
+}
+invisible(file.copy(codebook_pdf, out_dir, overwrite = TRUE))
 
 emp <- open_dataset("emp_hive",
   partitioning = c("year", "month"),

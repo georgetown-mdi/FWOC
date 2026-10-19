@@ -1,0 +1,161 @@
+---
+title: "Federal Workforce OpenCommons Aggregate Tables Codebook"
+subtitle: "Companion to the CSV files in the aggregates folder"
+date-format: "long"
+format:
+  pdf:
+    toc: true
+    toc-depth: 2
+    colorlinks: true
+    linkcolor: "RoyalBlue"
+    citecolor: "RoyalBlue"
+    urlcolor:  "RoyalBlue"
+    toccolor:  "RoyalBlue"
+execute:
+  echo: FALSE
+editor:
+    markdown:
+      wrap: 72
+---
+
+# How to Read this Codebook
+
+This codebook documents the aggregate tables published alongside the Federal Workforce OpenCommons (FWOC) microdata. The tables are per-period counts built from the FWOC employment, accessions and separations data. They are the microdata summed up, nothing more: no lagging and no ratios, and a filter to the executive branch only where this codebook says so. They exist so that common questions can be answered without downloading the microdata.
+
+**Files** lists each table and what one row represents. **Periods** and **Agencies and Subagencies** explain the row keys. **Indicator Columns** and **Count Columns** define every other column. **Unknown Codes** explains how a missing or unreported code in the microdata affects the counts. **Using the Tables** covers ratios, joins between tables and the overlap among appointee categories. Variable definitions for the underlying microdata, including every code referred to here, are in the [FWOC Codebook](https://github.com/georgetown-mdi/FWOC). The scripts that build the tables are in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC) under `aggregate/r2/`.
+
+All files are plain CSV with a header row. An empty cell is a missing value.
+
+# Files
+
+| File | Source data | One row per |
+|---|---|---|
+| `emp_counts_gov.csv` | employment | period, executive branch |
+| `emp_counts_agency.csv` | employment | period and agency |
+| `emp_counts_subagency.csv` | employment | period and subagency |
+| `acc_counts_gov.csv` | accessions | period, executive branch |
+| `acc_counts_agency.csv` | accessions | period and agency |
+| `acc_counts_subagency.csv` | accessions | period and subagency |
+| `sep_counts_gov.csv` | separations | period, executive branch |
+| `sep_counts_agency.csv` | separations | period and agency |
+| `sep_counts_subagency.csv` | separations | period and subagency |
+| `politicization_agency.csv` | employment | period and agency, executive branch |
+| `politicization_subagency.csv` | employment | period and subagency, executive branch |
+
+: Aggregate tables {#tbl-files tbl-colwidths="[36,20,44]"}
+
+Within each file, rows are sorted by agency, then subagency, then period, so every unit forms one contiguous block that runs through time.
+
+# Periods
+
+Employment rows are snapshots. `date` is the as-of day of the snapshot, and `year` and `month` are its calendar year and month. Snapshots are quarterly through June 2011 and monthly from July 2011. The snapshot day varies by era. For example, the fourth-quarter snapshot in the FOIA years falls on December 13, so use `date` when the exact day matters.
+
+Accession and separation rows are flows. They carry `year` and `month` only, because the underlying effective dates are day-level before 2005 and month-level from 2005. A row counts the actions effective in that calendar month.
+
+Nothing is shifted. An accession count for a month sits beside the employment snapshot for that same month, not the prior one. If you compute a rate, choose and align the denominator period yourself.
+
+| Column | Type | Files | Definition |
+|---|---|---|---|
+| `date` | date | employment and politicization | As-of day of the snapshot |
+| `year` | integer | all | Calendar year of the snapshot or of the action's effective date |
+| `month` | integer | all | Calendar month, 1 to 12, not zero-padded |
+
+: Period columns {#tbl-periods tbl-colwidths="[14,12,30,44]"}
+
+# Agencies and Subagencies
+
+Units are the FWOC agency and subagency codes and labels. Under the FWOC codes the Departments of the Army, Navy and Air Force are subelements of the Department of Defense (`DDAR`, `DDNV` and `DDAF` under `DD`) rather than separate agencies. The FWOC Codebook describes how the FWOC codes and names differ from OPM's.
+
+Labels change over time. A unit keeps one code but may carry different labels in different periods, so group on the code, not the label, when following a unit through time.
+
+Rows whose agency could not be assigned a FWOC code appear with an empty code and label. They are included in the agency and subagency counts files so that those files sum to the microdata.
+
+| Column | Type | Files | Definition |
+|---|---|---|---|
+| `agency_code_fwoc` | string | agency and subagency | FWOC agency code |
+| `agency_fwoc` | string | agency and subagency | FWOC agency name in that period |
+| `agency_subelement_code_fwoc` | string | subagency | FWOC subagency code |
+| `agency_subelement_fwoc` | string | subagency | FWOC subagency name in that period |
+
+: Unit columns {#tbl-units tbl-colwidths="[36,9,19,36]"}
+
+# Indicator Columns
+
+The agency and subagency counts files carry six descriptor columns taken from the microdata. All are 0/1 integers, empty where the agency code is missing. Each is a property of the agency in that period, so it does not split a unit's row.
+
+| Column | Definition |
+|---|---|
+| `exec_branch` | Agency is in the executive branch |
+| `leg_branch` | Agency is in the legislative branch |
+| `jud_branch` | Agency is in the judicial branch |
+| `a1_court` | Unit is an Article I court |
+| `eop` | Agency is in the Executive Office of the President in that period |
+| `core_eop` | Agency is a core component of the Executive Office of the President in that period |
+
+: Indicator columns {#tbl-indicators tbl-colwidths="[22,78]"}
+
+No branch filter has been applied to the agency and subagency counts files. They include the handful of legislative and judicial agencies that report to OPM. Filter on `exec_branch` to match the usual executive-branch universe.
+
+The U.S. Court of Appeals for the Armed Forces is an Article I court that sits inside the Department of Defense as subelement `DD08`. It is left in `DD` rather than broken out as its own agency, so in the agency files `DD` carries `a1_court` of 0. In the subagency files the `DD08` row carries 1. The FWOC Codebook explains why the court counts as executive branch.
+
+The government-wide counts files are the executive branch only and carry no indicator columns. They equal the agency counts files summed over rows with `exec_branch` of 1.
+
+The politicization files cover the executive branch only and carry just `eop` and `core_eop`, since the branch indicators do not vary within the executive branch.
+
+# Count Columns
+
+Every count is an integer number of records in the period. In the employment files a record is an employee in the snapshot. In the accessions and separations files a record is a personnel action.
+
+| Column | Files | Definition |
+|---|---|---|
+| `n_all` | counts | Every record in the period |
+| `n_nsftp` | counts | Records with `nsftp_indicator_fwoc` of 1: a full-time work schedule and a permanent appointment type |
+
+: Headcount columns {#tbl-counts tbl-colwidths="[16,12,72]"}
+
+| Column | Files | Definition |
+|---|---|---|
+| `n_app_all` | politicization | Political appointees: appointment type 34, 44 or 55, or pay plan EX |
+| `n_app_pas` | politicization | Presidential appointees with Senate confirmation: pay plan EX |
+| `n_app_sc` | politicization | Schedule C appointees: appointment type 34 or 44 |
+| `n_app_na_ses` | politicization | Noncareer Senior Executive Service: appointment type 55 |
+| `n_denom_mngr` | politicization | Managers: any reported supervisory status other than 8, All other positions. Under OPM's current codes that is 2 supervisor or manager, 4 supervisor, 5 management official, 6 leader and 7 team leader |
+| `n_denom_ca_ses` | politicization | Career Senior Executive Service: appointment type 50 |
+
+: Politicization columns {#tbl-pol tbl-colwidths="[20,18,62]"}
+
+Schedule C codes 34 and 44 are counted together. Code 34 is the permanent variant, retired on March 31, 1993, and code 44 the nonpermanent one, so combining them keeps the series continuous across that change.
+
+The politicization files start in 1982, when appointment type codes become available.
+
+# Unknown Codes
+
+A code in the microdata is unknown when it is missing or when OPM reports it as not specified, which OPM marks with `*` or `**`. Every count other than `n_all` is a count of records that definitely meet a condition, so a record never contributes on the strength of an unknown code.
+
+For the single-code counts, PAS, Schedule C, noncareer SES, managers and career SES, a record counts when its reported code matches and does not count otherwise.
+
+For `n_nsftp`, two conditions must both hold, a full-time schedule and a permanent appointment. A record counts when both reported codes satisfy them. It is excluded when either reported code fails, even if the other is unknown, because it cannot be NSFTP either way. It is also excluded when neither code fails but one is unknown.
+
+For `n_app_all`, either of two signals is enough. A record counts when its reported appointment type is 34, 44 or 55 or its reported pay plan is EX, even if the other code is unknown.
+
+The practical consequence is that a subset count can be smaller than it would be with complete data, and the subsets need not sum to `n_all`. This matters most for `n_nsftp` before 1986. OPM did not report an appointment type for about 14 percent of employment records from 1973 to 1981 and for a declining share through 1985, and those records are excluded from `n_nsftp` even where their work schedule is full-time.
+
+# Using the Tables
+
+**Ratios.** The politicization files report counts only. Divide the appointee column you want by the denominator you want. For an all-employee or NSFTP denominator, take `n_all` or `n_nsftp` from the employment counts file at the same level, joined on `date` and the agency code, or on `date`, the agency code and the subagency code. Filter the counts file to `exec_branch` of 1 first so the universes match.
+
+**Government-wide politicization.** Sum the agency politicization file over agencies within each `date`. The sum is exact because every agency row is the executive branch only and the indicator columns do not split rows.
+
+**Overlapping appointee categories.** The three appointee categories are not mutually exclusive. A small number of records carry pay plan EX together with a Schedule C or noncareer SES appointment type, so `n_app_pas`, `n_app_sc` and `n_app_na_ses` added together can slightly exceed `n_app_all`, which counts each record once. Use `n_app_all` for the total.
+
+**Reading the files in R.** Read every column as character first if you want to preserve codes exactly, then convert the counts. For example:
+
+```r
+library(readr)
+emp <- read_csv("emp_counts_agency.csv", na = "",
+                col_types = cols(.default = "c"))
+```
+
+# Provenance
+
+The tables are built by `aggregate/r2/agg_counts.R` and `aggregate/r2/agg_politicization_counts.R` in the FWOC repository, from the same employment, accessions and separations data published in the `parquet/` and `csv/` folders. The appointee and denominator definitions match the FWOC politicization dashboard. This codebook is rendered from `docs/fwoc_aggregates_codebook.qmd` in the same repository.
