@@ -44,36 +44,30 @@ flat <- emp |>
     # prep() already derives this as `appointee` (pay plan EX or appt type
     # 34/44/55). Aliased rather than restated so the two cannot drift apart.
     is_all = appointee,
-    is_pas = cast(
-      pay_plan_code == "EX", int8()
-    ),
+    # The single-code flags read prep()'s appt_code, pay_plan_known and
+    # supv_code, which are the raw codes with OPM's not-specified sentinels
+    # turned into NULL. Each is therefore 1 when the reported code matches, 0
+    # when it does not, NULL when the code is unknown. The sums below use
+    # na.rm = TRUE, so an unknown row sits outside both the numerator and the
+    # denominator rather than being reported as a definite non-member.
+    is_pas = cast(pay_plan_known == "EX", int8()),
     # Both codes are Schedule C: 34 is the permanent variant, retired
     # 1993-03-31, and 44 the nonpermanent one. Counting them together keeps the
     # SC series continuous across that code change.
-    is_sc = cast(
-      appointment_type_code == "44" | appointment_type_code == "34", int8()
-    ),
-    is_na_ses = cast(appointment_type_code == "55", int8()),
+    is_sc = cast(appt_code == "44" | appt_code == "34", int8()),
+    is_na_ses = cast(appt_code == "55", int8()),
+    # Derived in 11_harmonize_labels.R under the same unknown-code rule.
     is_nsftp = cast(nsftp_indicator_fwoc == 1L, int8()),
-    # Managers = any supervisory status other than 8 (ALL OTHER POSITIONS) and
-    # the unspecified marker *. Deliberately NOT restricted to
-    # nsftp_indicator_fwoc == 1 -- the literature sets no convention, so this
-    # counts every manager.
+    # Managers = any reported supervisory status other than 8 (ALL OTHER
+    # POSITIONS). Deliberately NOT restricted to nsftp_indicator_fwoc == 1 --
+    # the literature sets no convention, so this counts every manager.
     #
     # This is a denylist, so any code it does not name counts as a manager --
     # including codes OPM adds later, and codes whose meaning changes. Check new
     # supervisory status codes against this rule rather than assuming they fall
     # through.
-    #
-    # A missing code yields NULL, not 0, so unknown supervisory status is not
-    # reported as a definite non-manager. Every is_* here propagates NULL the
-    # same way; the sums below use na.rm = TRUE, so unknown rows sit outside
-    # both the numerator and the denominator.
-    is_mngr = cast(
-      supervisory_status_code != "8" &
-        supervisory_status_code != "*", int8()
-    ),
-    is_ca_ses = cast(appointment_type_code == "50", int8())
+    is_mngr = cast(supv_code != "8", int8()),
+    is_ca_ses = cast(appt_code == "50", int8())
   ) |>
   group_by(date, year, month, !!!syms(pol_grp_sub)) |>
   summarize(

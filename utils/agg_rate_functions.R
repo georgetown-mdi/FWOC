@@ -2,10 +2,18 @@
 # Purpose: Shared scoping for the Superset aggregates. prep() and the grp*
 #   grouping vectors are sourced by every aggregate/agg_*.R builder and by the
 #   aggregate reconciliation check, so all of them apply the IDENTICAL universe
-#   and scoping (exec branch, FWOC-agency filter, the 00/01/04 drop, appointee,
-#   DoD fold, unlabelled-code sentinel) from one definition -- a divergence
-#   would surface as phantom drift. Pure definitions, no side effects; the
-#   caller attaches arrow + dplyr.
+#   and scoping (exec branch, FWOC-agency filter, the 00/01/04 drop, the
+#   unknown-code rule, appointee, DoD fold, unlabelled-code sentinel) from one
+#   definition -- a divergence would surface as phantom drift. Pure
+#   definitions, no side effects; the caller attaches arrow + dplyr.
+#
+#   Unknown-code rule: a code that is missing or that OPM reports as not
+#   specified (* or **) is unknown, and no flag is ever 0 on the strength of an
+#   unknown code. prep() exposes appt_code, pay_plan_known and supv_code, the
+#   source codes with their sentinels turned into NULL, and every flag built
+#   here or in aggregate/agg_politicization.R reads those rather than the raw
+#   columns. Same rule as aggregate/r2/agg_politicization_counts.R and as
+#   nsftp_indicator_fwoc in 11_harmonize_labels.R.
 
 # Full grain for the acc/sep numerator tables (keeps nsftp + appointee
 # subgroups).
@@ -36,32 +44,50 @@ grp_agency <- c(
   "agency_code_fwoc", "agency_fwoc"
 )
 
+# OPM's "not specified" sentinels. Appointment type and pay plan use both,
+# supervisory status uses *. A row carrying one is unknown, not a known
+# non-member, and prep() treats it exactly like a missing code.
+not_specified_codes <- c("*", "**")
+
 prep <- function(ds) {
   ds |>
     filter(exec_branch == 1L) |>
     filter(!is.na(agency_fwoc) & !is.na(agency_code_fwoc)) |>
     filter(!(agency_code_fwoc %in% c("00", "01", "04"))) |>
     mutate(
+      # Each source code with its not-specified sentinels turned into NULL, so
+      # that appointee below, and the politicization flags in
+      # aggregate/agg_politicization.R, read a reported code or nothing. == and
+      # | on a NULL then propagate it (NULL == "EX" is NULL, FALSE | NULL is
+      # NULL, TRUE | NULL is TRUE). The flags use == rather than %in% because
+      # %in% answers FALSE for NULL. Exposed, not dropped, so every builder
+      # applies one rule for what counts as an unknown code.
+      appt_code = if_else(
+        appointment_type_code %in% not_specified_codes,
+        NA_character_, appointment_type_code
+      ),
+      pay_plan_known = if_else(
+        pay_plan_code %in% not_specified_codes,
+        NA_character_, pay_plan_code
+      ),
+      supv_code = if_else(
+        supervisory_status_code %in% not_specified_codes,
+        NA_character_, supervisory_status_code
+      ),
       # appointee: 1 = appointment type 34/44/55 or pay plan EX, 0 = careerist,
-      # NULL = undetermined.
-      #
-      # Only %in% is wrapped, because the two operators disagree on missing
-      # values: %in% answers FALSE, == answers NULL. Wrapping makes both
-      # propagate, so `|` gives 1 when either signal fires and NULL when neither
-      # was observed.
+      # NULL = undetermined. Three-valued: either reported signal is enough for
+      # a 1, so an EX row with no appointment type is an appointee. A 0 needs
+      # both codes reported and neither firing. Anything else is NULL.
       #
       # KEEP the NULL -- do NOT coalesce it to 0/1. A GS pay plan does not rule
       # out an appointee (Schedule C appointees are routinely GS-graded), so a
-      # GS row with no appointment type is genuinely unknown. Undetermined rows
-      # must stay out of both the careerist and appointee denominators while
-      # still counting under All, so the total stays correct. See
-      # superset_rate_queries.md (internal).
+      # GS row with an unknown appointment type is genuinely unknown.
+      # Undetermined rows must stay out of both the careerist and appointee
+      # denominators while still counting under All, so the total stays
+      # correct. See superset_rate_queries.md (internal).
       appointee = cast(
-        if_else(
-          is.na(appointment_type_code),
-          NA,
-          appointment_type_code %in% c("34", "44", "55")
-        ) | pay_plan_code == "EX",
+        appt_code == "34" | appt_code == "44" | appt_code == "55" |
+          pay_plan_known == "EX",
         int8()
       ),
       # DoD-only consolidation: for the DoD group (agency_code_fwoc == "DD"),
