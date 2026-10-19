@@ -150,6 +150,12 @@ run_step("codebook/02_codebook_build.R",              "Codebook 02 Codebook buil
 # Both run only if every hard check above passed.
 run_step("15_public_data_export.R",                   "15 Public data export")
 
+# The R2 aggregate CSVs. Written into export/aggregates/ so 16 publishes them
+# with the rest of the tree. After 15 rather than with the Superset aggregates
+# because they are a published product and belong behind the gate.
+run_step("aggregate/r2/agg_counts.R",                 "R2 aggregate counts (emp/acc/sep, 3 levels)")
+run_step("aggregate/r2/agg_politicization_counts.R",  "R2 politicization counts (2 levels)")
+
 # 17 carries its own gate: it stop()s unless FWOC_PUBLISH=1, so an unattended build
 # cannot publish. Honour that gate here rather than calling it and failing -- a
 # refusal is the normal outcome, and logging it as [ERROR] every month would train

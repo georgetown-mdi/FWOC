@@ -40,7 +40,7 @@ Where FWOC publishes an alternative version of an OPM variable, the FWOC version
 setup/              Builds the pipeline's inputs: label tables, BLS series, renv.lock
 utils/              Helper functions sourced by the scripts
 crosswalks/         Builds the occupational category (PATCO) crosswalk
-aggregate/          Builds the aggregate tables behind the FWOC dashboards
+aggregate/          Builds the aggregate tables behind the FWOC dashboards, and (r2/) the summary CSVs published with the data
 validation/         Post-build validation suite
 codebook/           Rebuilds the codebook table from the built hives
 docs/               The codebook and user guide, as Quarto documents (_quarto.yml renders them from the root)
