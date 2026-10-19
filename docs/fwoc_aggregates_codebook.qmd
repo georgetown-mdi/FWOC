@@ -140,7 +140,7 @@ For the single-code counts, PAS, Schedule C, noncareer SES, managers and career 
 
 For `n_nsftp`, two conditions must both hold, a full-time schedule and a permanent appointment. A record is coded NSFTP when both reported codes satisfy the conditions. It is excluded when either code fails to satisfy the conditions, even if the other is unknown, because the record cannot be NSFTP either way. A record is not counted as NSFTP if one code satisfies the condition but the other is unknown.
 
-For `n_app_all`, either of two signals is enough. A record counts as an appointee when its reported appointment type is 34, 44 or 55 or its reported pay plan is EX, even if the other code is unknown.
+For `n_app_all`, satisfying either of the two conditions is sufficient. A record counts as an appointee when its reported appointment type is 34, 44 or 55 or its reported pay plan is EX, even if the other code is unknown.
 
 The practical consequence is that a subset count can be smaller than it would be with complete data, and the subsets need not sum to `n_all`. This matters most for `n_nsftp` before 1986. OPM did not report an appointment type for about 14 percent of employment records from 1973 to 1981 and for a declining share through 1985, and those records are excluded from `n_nsftp` even where their work schedule is full-time.
 
