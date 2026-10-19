@@ -3,6 +3,8 @@ title: "Federal Workforce OpenCommons User Guide"
 date: "10/09/2026"
 format:
   pdf:
+    toc: true
+    toc-depth: 3
     colorlinks: true
     linkcolor: "RoyalBlue"   # internal: TOC, \ref to tables/figures
     citecolor: "RoyalBlue"   # bibliography
@@ -104,9 +106,9 @@ tribble(
 
 This section describes coverage of agencies and personnel. We begin with OPM's [data sources page](https://data.opm.gov/resources/data-sources) as of 2026-10-09 and supplemented OPM's description where appropriate.
 
-### Coverage: Agencie
+### Coverage: Agencies
 
-** Executive Brach**
+**Executive Branch**
 
 The following executive branch agencies are **excluded**. The dates below are from OPM's lookup table and from the employment data. In some cases, OPM appends a note to the agency name, "NOTE: ORGANIZATION DOES NOT MAKE HR SUBMISSIONS TO OPM. CODE MAY BE USED FOR OTHER DOCUMENTATION PURPOSES.", when the agency stops reporting workforce data to OPM while the code and name for the agency remain in the lookup table. FWOC's label files carry the name without the note, and the entries below give the date from which OPM's table carries it.
 
