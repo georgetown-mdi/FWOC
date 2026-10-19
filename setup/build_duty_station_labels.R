@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Parse the OPM duty-station codes from the fixed-width SCTFILE.TXT
 #          (shipped with the BuzzFeed release) and build the country/county/city
 #          label crosswalks. Re-run only if SCTFILE.TXT changes.

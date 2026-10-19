@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Per-period counts of political appointees and of the candidate
 #          denominators behind politicization ratios, from the emp hive at the
 #          agency and subagency levels, published to the R2 bucket as CSV

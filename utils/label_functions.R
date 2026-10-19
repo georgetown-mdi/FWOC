@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Time-varying code->label join helpers. label_codes() joins a code to
 #          its label by matching the code and the date range; the opm* helpers
 #          detect, clean, and month-expand the duty-station label windows for

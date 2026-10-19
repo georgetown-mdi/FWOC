@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Validate the BZ data using the period where BZ and FWD overlap.
 #   The raw BZ FOIA hives retain 2005+ rows (the staging cut to <=2004 happens in script
 #   05), so BZ and FWD overlap: emp 2005Q1-2017Q1, acc/sep 2005Q1-2016Q2. BZ is

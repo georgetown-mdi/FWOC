@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Build the OPM code->label maps and write them to metadata/labels/*.csv
 #   (consumed by 09_agency_names.R / 11_harmonize_labels.R). Does not touch any
 #   hive data.

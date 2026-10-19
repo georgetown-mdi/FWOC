@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Ex.3 -- row-count reconciliation. Assembly must neither gain nor lose
 #          rows: source counts (BZ raw FOIA hives, year<2005; FWD data.opm.gov
 #          staging hives) must equal the amalgamated-hive counts for the same

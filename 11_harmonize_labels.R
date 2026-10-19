@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Apply the standardized OPM code -> label maps to the assembled emp,
 #          acc and sep hives. One label source covers both the BZ and FWD eras.
 #          Also derives:

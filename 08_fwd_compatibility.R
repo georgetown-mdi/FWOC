@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Harmonize data.opm.gov (FWD) with the BZ conventions -- ordinal length
 #          of service, 1/0 indicators, and an end-of-month date and quarter -- and
 #          write the 2005-onward data to the final hives (emp_hive, acc_hive,

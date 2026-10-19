@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Join BLS macro covariates (CPI-U, national unemployment, state
 #          unemployment) to the emp, acc and sep hives and add a real
 #          (inflation-adjusted) salary variable. CPI is rebased to the 2024

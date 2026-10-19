@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Stacked politicization tables for Superset at three aggregation
 #          levels (gov, agency, subagency). Users choose a denominator
 #          (NSFTP, Managers, Career SES) and filter by appointee type

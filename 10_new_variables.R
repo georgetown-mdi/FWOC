@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Create derived indicator variables for emp, acc, and sep hives.
 #          Variables added: leg_branch, jud_branch, a1_court, exec_branch,
 #          eop, core_eop, pres_admin.

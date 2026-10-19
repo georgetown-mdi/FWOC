@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Make buzzfeed data compatible with data.opm.gov, including:
 #          1. Standardize age variable
 #          2. Create a numeric salary variable

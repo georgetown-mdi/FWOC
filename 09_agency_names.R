@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Join agency and subagency labels to emp, acc, and sep hives from the
 #          OPM lookup tables. No edits or corrections are applied to `agency`
 #          or `agency_subelement` here so they remain the official OPM version.

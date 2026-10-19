@@ -1,4 +1,4 @@
-# Author: Mark Richardson and Claude Code
+# Author: Mark Richardson, Benjamin Reese, and Claude Code
 # Purpose: Label duty station in the emp/status, accessions, and separations
 #          data for BZ era and write it to the staging hives.
 #          Runs after 05, which rebuilds those hives unlabelled. BZ is frozen,
