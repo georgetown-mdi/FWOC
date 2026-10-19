@@ -22,9 +22,9 @@ editor:
 
 This codebook documents the agency-level counts published alongside the Federal Workforce OpenCommons (FWOC) individual-level data. The tables are per-period counts built from the FWOC employment, accessions and separations data.
 
-**Files** lists each CSV file, source data, and the level of aggregation. **Periods** and **Agencies and Subagencies** explain time grain and how agency and subagencies code-name pairs behave over time. **Indicator Columns** and **Count Columns** define every other column. **Unknown Codes** explains how a missing or unreported code in the source data affects the counts. **Using the Tables** covers ratios, joins between tables and the overlap among appointee categories. Variable definitions for the individual-level data, including every code referred to here, are in the [FWOC Codebook](https://github.com/georgetown-mdi/FWOC). The scripts that build the tables are in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC) under `aggregate/r2/`.
+**Files** lists each CSV file, source data, and the level of aggregation. **Periods** and **Agencies and Subagencies** explain the time grain and how agency and subagency code-name pairs behave over time. **Indicator Columns** and **Count Columns** define every other column. **Unknown Codes** explains how a missing or unreported code in the source data affects the counts. **Using the Tables** covers ratios, joins between tables and the overlap among appointee categories. Variable definitions for the individual-level data, including every code referred to here, are in the [FWOC Codebook](https://drive.google.com/file/d/1zw0yHus6E5ECK23D1LxrRe8lzxjdAPuA/view?usp=drive_link). The scripts that build the tables are in the [FWOC GitHub repository](https://github.com/georgetown-mdi/FWOC) under `aggregate/r2/`.
 
-All files are plain CSV with a header row. An empty cell is a missing value. Empty cells occur only in code, label and indicator columns, never in a count. **Agencies and Subagencies** explains when they occur.
+All files are plain CSV with a header row. An empty cell is a missing value. Empty cells occur only in code, label and indicator columns, never in a count. The **Agencies and Subagencies** section explains when they occur.
 
 # Files
 
@@ -48,11 +48,9 @@ Within each file, rows are sorted by agency, then subagency, then period, so eve
 
 # Periods
 
-Employment rows are snapshots. `date` is the as-of day of the snapshot, and `year` and `month` are its calendar year and month. Snapshots are quarterly through June 2011 and monthly from July 2011. The snapshot day varies by era. For example, the fourth-quarter snapshot in the FOIA years falls on December 13, so use `date` when the exact day matters.
+Employment rows are snapshots. `date` is the as-of day of the snapshot, and `year` and `month` are its calendar year and month. Snapshots are quarterly through June 2011 and monthly from July 2011. The snapshot day in December varies by era. For example, the fourth-quarter snapshot in the FOIA years falls on December 13, so use `date` when the exact day matters.
 
-Accession and separation rows are flows. They carry `year` and `month` only, because the underlying effective dates are day-level before 2005 and month-level from 2005. A row counts the actions effective in that calendar month.
-
-Nothing is shifted. An accession count for a month sits beside the employment snapshot for that same month, not the prior one. If you compute a rate, choose and align the denominator period yourself.
+Accession and separation rows are flows. They carry `year` and `month` only, because the underlying effective dates are day-level before 2005 and month-level from 2005. The counts are the number of effective actions in that calendar month.
 
 | Column | Type | Files | Definition |
 |---|---|---|---|
@@ -64,17 +62,15 @@ Nothing is shifted. An accession count for a month sits beside the employment sn
 
 # Agencies and Subagencies
 
-Units are the FWOC agency and subagency codes and labels. Under the FWOC codes the Departments of the Army, Navy and Air Force are subelements of the Department of Defense (`DDAR`, `DDNV` and `DDAF` under `DD`) rather than separate agencies. The FWOC Codebook describes how the FWOC codes and names differ from OPM's.
+Units are the FWOC agency and subagency codes and labels. Under the FWOC codes the Departments of the Army, Navy and Air Force are subelements of the Department of Defense (`DDAR`, `DDNV` and `DDAF` under `DD`) rather than separate agencies. The FWOC Codebook describes how the FWOC codes and names differ from OPM's. Labels and codes change over time. Most often, the same code maps to multiple names across time; however, in some cases a name changes codes over time. See the *FWOC Agency and Subagency Variables* section of the FWOC Codebook for additional details.
 
-Labels change over time. A unit keeps one code but may carry different labels in different periods, so group on the code, not the label, when following a unit through time.
-
-Most agencies report as a single unit. In the subagency files such an agency has one subagency row per period, with a code ending in `00` and the agency's own name as the subagency name. These rows are kept so that the subagency files cover every agency and sum to the agency files. An agency can move between one and several subagencies over time as OPM's reporting structure changes.
+Most independent agencies have no meaningful subagency reporting unit. In the subagency files such an agency has one subagency row per period, with a code ending in `00` and the agency's own name as the subagency name. For example, the only subagency of the Environmental Protection Agency (`EP`) is the Environmental Protection Agency (`EP00`). Among executive departments, the Department of State (`ST`) and the Department of Energy (`DN`) have limited reporting of subunits. State reports no subunits from September 1985, and Energy reports only the Federal Energy Regulatory Commission (`DNFE`) as a distinct subagency, beginning in August 2011. These rows are kept so that the subagency files cover every agency and sum to the agency files. An agency can move between one and several subagencies over time as OPM's reporting structure changes. A unit can also move between the two levels. The Agency for International Development is a subagency of State (`ST02`) through March 1980, then a subagency (`AMAG`) of the U.S. International Development Cooperation Agency (`AM`) through March 1999, and from June 1999 an agency in its own right, when the `AM` code and name pass to USAID itself (`AM00`).
 
 Some code cells and some label cells are empty. The cases are:
 
 - A subagency code ending in `**`, such as `VA**`, is OPM's own code for records whose agency was reported but whose subagency was not. There is no label for it, so the label cell is empty. Several such codes run to the present.
-- A code with no label in a period is a real code that falls outside the dates of OPM's label for it, usually because the label window has closed or has not yet opened. Most of these codes carry a label in other periods.
-- Rows whose agency could not be assigned a FWOC code have an empty agency code and label, and empty indicator columns.
+- A code with no label in a period is a real code that falls outside the dates during which OPM publishes a label for it, usually because the label window has closed or has not yet opened. Most of these codes carry a label in other periods.
+- Rows whose agency code is malformed and matches no OPM agency, such as `04GS`, have an empty agency code and label, and empty indicator columns. There are four such records, all in employment snapshots from 1973 and 1974.
 
 All three kinds of row are kept so that the agency and subagency counts files sum to the individual-level data. Nothing is ever empty in a count column.
 
@@ -102,9 +98,7 @@ The agency and subagency counts files carry six descriptor columns taken from th
 
 : Indicator columns {#tbl-indicators tbl-colwidths="[22,78]"}
 
-No branch filter has been applied to the agency and subagency counts files. They include the handful of legislative and judicial agencies that report to OPM. Filter on `exec_branch` to match the usual executive-branch universe.
-
-The U.S. Court of Appeals for the Armed Forces is an Article I court that sits inside the Department of Defense as subelement `DD08`. It is left in `DD` rather than broken out as its own agency, so in the agency files `DD` carries `a1_court` of 0. In the subagency files the `DD08` row carries 1. The FWOC Codebook explains why the court counts as executive branch.
+The agency and subagency counts files include units from all three branches of government. They include the handful of legislative and judicial agencies that report to OPM. Filter on `exec_branch` to subset to only executive branch agencies. The U.S. Court of Appeals for the Armed Forces is an Article I court that sits inside the Department of Defense as subelement `DD08`. It is left in `DD` rather than broken out as its own agency, so in the agency files `DD` carries `a1_court` of 0. In the subagency files the `DD08` row carries `a1_court` of 1. The court and its predecessors count as executive branch, with `exec_branch` of 1, because although it is an Article I court it is placed within the Department of Defense by statute. The Coverage: Agencies section of the FWOC User Guide has the details.
 
 The government-wide counts files are the executive branch only and carry no indicator columns. They equal the agency counts files summed over rows with `exec_branch` of 1.
 
@@ -113,6 +107,8 @@ The politicization files cover the executive branch only and carry just `eop` an
 # Count Columns
 
 Every count is an integer number of records in the period. In the employment files a record is an employee in the snapshot. In the accessions and separations files a record is a personnel action.
+
+A record is not always a distinct person. The employee identifier in the FOIA data, `pseudo_id`, shows that a small share of employment records duplicate another record with the same identifier and the same as-of date, 0.17 percent of observations over the years the identifier is available. Those records are counted twice in `n_all` and in any subset they fall into. The FWD data carry no identifier, so the share cannot be measured there. See the `pseudo_id` entry in the FWOC Codebook.
 
 | Column | Files | Definition |
 |---|---|---|
@@ -134,25 +130,27 @@ Every count is an integer number of records in the period. In the employment fil
 
 Schedule C codes 34 and 44 are counted together. Code 34 is the permanent variant, retired on March 31, 1993, and code 44 the nonpermanent one, so combining them keeps the series continuous across that change.
 
-The politicization files start in 1982, when appointment type codes become available.
+The politicization files start in 1982, when appointment type labels become available.
 
 # Unknown Codes
 
-A code in the individual-level data is unknown when it is missing or when OPM reports it as not specified, which OPM marks with `*` or `**`. Every count other than `n_all` is a count of records that definitely meet a condition, so a record never contributes on the strength of an unknown code.
+A code in the individual-level data is unknown when it is missing or when OPM reports it as not specified, which OPM marks with `*` or `**`. Every count other than `n_all` is a count of records that definitely meet one or more conditions.
 
-For the single-code counts, PAS, Schedule C, noncareer SES, managers and career SES, a record counts when its reported code matches and does not count otherwise.
+For the single-code counts, PAS, Schedule C, noncareer SES, managers and career SES, a record counts when its reported code satisfies the condition and does not count otherwise.
 
-For `n_nsftp`, two conditions must both hold, a full-time schedule and a permanent appointment. A record counts when both reported codes satisfy them. It is excluded when either reported code fails, even if the other is unknown, because it cannot be NSFTP either way. It is also excluded when neither code fails but one is unknown.
+For `n_nsftp`, two conditions must both hold, a full-time schedule and a permanent appointment. A record is coded NSFTP when both reported codes satisfy the conditions. It is excluded when either code fails to satisfy the conditions, even if the other is unknown, because the record cannot be NSFTP either way. A record is not counted as NSFTP if one code satisfies the condition but the other is unknown.
 
-For `n_app_all`, either of two signals is enough. A record counts when its reported appointment type is 34, 44 or 55 or its reported pay plan is EX, even if the other code is unknown.
+For `n_app_all`, either of two signals is enough. A record counts as an appointee when its reported appointment type is 34, 44 or 55 or its reported pay plan is EX, even if the other code is unknown.
 
 The practical consequence is that a subset count can be smaller than it would be with complete data, and the subsets need not sum to `n_all`. This matters most for `n_nsftp` before 1986. OPM did not report an appointment type for about 14 percent of employment records from 1973 to 1981 and for a declining share through 1985, and those records are excluded from `n_nsftp` even where their work schedule is full-time.
 
 # Using the Tables
 
-**Ratios.** The politicization files report counts only. Divide the appointee column you want by the denominator you want. For an all-employee or NSFTP denominator, take `n_all` or `n_nsftp` from the employment counts file at the same level, joined on `date` and the agency code, or on `date`, the agency code and the subagency code. Filter the counts file to `exec_branch` of 1 first so the universes match.
+**Ratios.** The politicization files report counts only. Divide the appointee column you want by the denominator you want. For an all-employee or NSFTP denominator, take `n_all` or `n_nsftp` from the employment counts file at the same level, joined on `date` and the agency code, or on `date`, the agency code and the subagency code, after filtering the counts file to `exec_branch` of 1 so the universes match.
 
-**Government-wide politicization.** Sum the agency politicization file over agencies within each `date`. The sum is exact because every agency row is the executive branch only and the indicator columns do not split rows.
+**Joining accessions or separations to employment.** The flow files carry `year` and `month` and the employment files carry `date` as well, so join on `year`, `month` and the agency code, adding the subagency code at the subagency level. For a rate whose denominator is the population at the start of the period, shift the employment file forward one period before joining, so that the snapshot at the end of month *t*-1 serves as the denominator for the flows of month *t*. Before July 2011 the employment snapshots are quarterly while the flows are monthly, so a monthly rate needs a choice about which snapshot to carry across the quarter.
+
+**Join on codes, and check them across periods.** A unit's name at census date *t* can differ from its name at *t*+1, so a join on names drops rows whenever a name changes. Join on the FWOC codes instead. Codes are more stable but not fixed. A unit can move to a new code, as the Agency for International Development did, and the subagency file for one period may list a unit under a code that the next period does not use. When a joined series shows a break, compare the unit's rows in the two files period by period before concluding that the workforce changed.
 
 **Overlapping appointee categories.** The three appointee categories are not mutually exclusive. A small number of records carry pay plan EX together with a Schedule C or noncareer SES appointment type, so `n_app_pas`, `n_app_sc` and `n_app_na_ses` added together can slightly exceed `n_app_all`, which counts each record once. Use `n_app_all` for the total.
 
@@ -166,4 +164,4 @@ emp <- read_csv("emp_counts_agency.csv", na = "",
 
 # Provenance
 
-The tables are built by `aggregate/r2/agg_counts.R` and `aggregate/r2/agg_politicization_counts.R` in the FWOC repository, from the same employment, accessions and separations data published in the `parquet/` and `csv/` folders. The appointee and denominator definitions match the FWOC politicization dashboard. This codebook is rendered from `docs/fwoc_aggregates_codebook.qmd` in the same repository.
+The tables are built by two scripts in the FWOC repository, `aggregate/r2/agg_counts.R` for the counts files and `aggregate/r2/agg_politicization_counts.R` for the politicization files, from the same employment, accessions and separations data published in the `parquet/` and `csv/` folders. The appointee and denominator definitions match the FWOC politicization dashboard. This codebook is rendered from `docs/fwoc_aggregates_codebook.qmd` in the same repository.
