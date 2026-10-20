@@ -29,10 +29,17 @@ ag_at <- emp |>
   # consolidated AR/AF/NV rows aggregate into DD.
   prep() |>
   # Published by this table only, so it is derived here rather than in prep().
-  mutate(ex_pay_plan = cast(pay_plan_code == "EX", int8())) |>
+  # Read from prep()'s pay_plan_known, not the raw pay_plan_code, so a
+  # not-specified pay plan (* or **) gives NULL rather than 0, under the same
+  # unknown-code rule as appointee.
+  mutate(ex_pay_plan = cast(pay_plan_known == "EX", int8())) |>
   # appointee is in the grain but cannot split a group: it is a function of
-  # appointment_type_code and pay_plan_code, and ex_pay_plan carries the only
-  # part of pay_plan_code it reads.
+  # appointment_type_code and ex_pay_plan. The raw appointment_type_code keeps
+  # the sentinels as their own categories, and the three-valued ex_pay_plan
+  # carries the only part of the pay plan appointee reads. Were ex_pay_plan
+  # built from the raw code, a ** pay plan would share ex_pay_plan = 0 with a
+  # GS pay plan while carrying appointee NULL instead of 0, and the group
+  # would split.
   count(date, year, month,
         agency_code, agency,
         agency_code_fwoc, agency_fwoc,
